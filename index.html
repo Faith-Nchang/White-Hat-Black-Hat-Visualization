@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>White Hat / Black Hat: Greenhouse Gas Emissions</title>
+  <link href="css/styles.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" defer></script>
+  <script src="js/script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#white-hat">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <h1>White Hat / Black Hat: Greenhouse Gas Emissions</h1>
+      <p class="lede">The same national emissions data drawn honestly and then deliberately distorted, to show how design choices change what a chart says.</p>
+      <p class="source">Data source: OECD Air Emissions GHG Inventories (DF_AIR_GHG).</p>
+    </div>
+  </header>
+
+  <nav class="site-nav" aria-label="Page sections">
+    <div class="wrap">
+      <ul>
+        <li><a href="#white-hat">White Hat</a></li>
+        <li><a href="#black-hat">Black Hat</a></li>
+        <li><a href="#extra-credit">Extra Credit</a></li>
+        <li><a href="#writeups">Write-ups</a></li>
+        <li><a href="#appendix">Appendix</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div id="load-status" class="wrap" role="status" aria-live="polite">Loading emissions data…</div>
+
+  <main class="wrap">
+    <section id="white-hat" aria-labelledby="white-hat-title">
+      <h2 id="white-hat-title">White Hat</h2>
+      <article class="card" data-view="changeByCountry">
+        <h3>Change by country</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="ukraine">
+        <h3>Total with and without Ukraine</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="transparency">
+        <h3>Data transparency</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="nordic">
+        <h3>Nordic countries with and without land use</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+    </section>
+
+    <section id="black-hat" aria-labelledby="black-hat-title">
+      <h2 id="black-hat-title">Black Hat</h2>
+      <article class="card" data-view="blackHat1">
+        <h3>Black Hat view 1</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="blackHat2">
+        <h3>Black Hat view 2</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="blackHat3">
+        <h3>Black Hat view 3</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card reveal" data-view="reveal">
+        <h3>Reveal the distortions</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+    </section>
+
+    <section id="extra-credit" aria-labelledby="extra-credit-title">
+      <h2 id="extra-credit-title">Extra Credit</h2>
+      <article class="card" data-view="linkedBrushing">
+        <h3>Linked brushing</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+      <article class="card" data-view="windowExplorer">
+        <h3>Window explorer</h3>
+        <div class="chart" data-chart></div>
+        <p class="caption" data-caption></p>
+      </article>
+    </section>
+
+    <section id="writeups" aria-labelledby="writeups-title">
+      <h2 id="writeups-title">Write-ups</h2>
+      <article class="card" id="writeup-white-hat">
+        <h3>White hat write-up</h3>
+      </article>
+      <article class="card" id="writeup-black-hat">
+        <h3>Black hat write-up</h3>
+      </article>
+    </section>
+
+    <section id="appendix" aria-labelledby="appendix-title">
+      <h2 id="appendix-title">Appendix</h2>
+      <article class="card" id="appendix-data">
+        <h3>Data and references</h3>
+      </article>
+      <article class="card" id="appendix-process">
+        <h3>Development process</h3>
+      </article>
+      <article class="card" id="appendix-ai">
+        <h3>AI usage</h3>
+      </article>
+    </section>
+  </main>
+
+  <footer class="wrap site-footer">
+    <p>Built with vanilla JavaScript and D3 v7.</p>
+  </footer>
+</body>
+</html>
