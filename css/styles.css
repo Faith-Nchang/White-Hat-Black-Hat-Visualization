@@ -141,6 +141,20 @@ section > h2 {
 
 .chart { min-height: 220px; }
 .chart svg { display: block; width: 100%; height: auto; }
+.emissions-headline { margin: 1rem 0 0.25rem; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.2; }
+.emissions-subtitle { margin: 0 0 1rem; color: var(--muted); font-size: var(--fs-sm); }
+.emissions-grid line { stroke: #e5e8e5; }
+.emissions-unit { fill: var(--muted); font-size: 13px; }
+.emissions-point { cursor: help; }
+.reveal-explanations { padding-left: 1.25rem; font-size: var(--fs-sm); }
+.reveal-explanations li { margin-top: 0.5rem; }
+.comparison-label { margin: 1rem 0 0; font-size: var(--fs-sm); font-weight: 700; letter-spacing: 0.04em; color: var(--muted); }
+.comparison-explanation { margin-top: 1rem; padding: 1rem; border-left: 3px solid var(--accent); background: var(--surface); }
+.comparison-explanation p { margin: 0.35rem 0 0; max-width: 75ch; }
+.reveal-tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+.reveal-tabs button { font: inherit; padding: 0.75rem 1rem; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+.reveal-tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.reveal-panel[hidden] { display: none; }
 
 .caption {
   margin: var(--sp-2) 0 0;
