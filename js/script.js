@@ -232,6 +232,24 @@ function renderEmissionsLine(container, options) {
   }
 
   function updateVis() {
+    if (options.fullPeriod) {
+      // Place the selected window behind the data without changing the scales.
+      const window = svg.insert("g", ":first-child").attr("class", "selected-window")
+        .attr("pointer-events", "none");
+      window.append("rect")
+        .attr("x", xScale(2007)).attr("y", 0)
+        .attr("width", xScale(2020) - xScale(2007)).attr("height", height)
+        .attr("fill", palette.orange).attr("fill-opacity", 0.14);
+      window.selectAll("line").data([2007, 2020]).join("line")
+        .attr("x1", d => xScale(d)).attr("x2", d => xScale(d))
+        .attr("y1", 0).attr("y2", height)
+        .attr("stroke", "#946000").attr("stroke-dasharray", "4 4");
+      svg.append("text")
+        .attr("x", (xScale(2007) + xScale(2020)) / 2).attr("y", 18)
+        .attr("text-anchor", "middle").attr("fill", "#805200")
+        .attr("font-size", 13).attr("font-weight", 600)
+        .text("2007–2020: window used in distorted chart");
+    }
     svg.append("path").datum(plotted).attr("fill", "none").attr("stroke", color)
       .attr("stroke-width", 3).attr("stroke-linejoin", "round")
       .attr("d", d3.line().x(d => xScale(d.year)).y(d => yScale(d.mt)));
