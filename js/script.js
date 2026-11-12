@@ -22,6 +22,7 @@ const fmtPct = d3.format("+.1%");
 const formatMt = v => (v == null || Number.isNaN(v) ? "n/a" : `${fmtMt(v)} Mt`);
 const formatInt = v => fmtInt(v);
 const formatPct = v => (v == null || !Number.isFinite(v) ? "n/a" : fmtPct(v));
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const dataStore = (() => {
   let rows = null;
@@ -178,15 +179,21 @@ function renderEmissionsLine(container, options) {
   root.append("h4").attr("class", "emissions-headline").text(options.neutralHeadline
     ? `Total greenhouse gas emissions, ${first.year}–${last.year}`
     : `Emissions Have Fallen ${drop.toFixed(1)}% Since 2007`);
-  // The distorted version leaves the end year out of the subtitle; it appears only on the x-axis.
-  root.append("p").attr("class", "emissions-subtitle").text(options.neutralHeadline
-    ? `${countries.length} countries with complete data · ${first.year}–${last.year} · Excluding land use`
-    : `${countries.length} countries with complete data · National totals · Excluding land use`);
+  // The distorted version leaves the end year out of the chips; it appears only on the x-axis.
+  const chipTexts = options.neutralHeadline
+    ? [`${countries.length} countries with complete data`, `${first.year}–${last.year}`, "Excluding land use"]
+    : [`${countries.length} countries with complete data`, "National totals", "Excluding land use"];
+  root.append("ul").attr("class", "wh-stats").attr("aria-label", "Summary")
+    .selectAll("li").data(chipTexts).join("li").attr("class", "wh-chip").text(d => d);
 
-  const margin = { top: 35, right: 35, bottom: 60, left: 90 };
-  const width = 900 - margin.left - margin.right;
-  const height = 440 - margin.top - margin.bottom;
-  const chart = root.append("svg").attr("viewBox", "0 0 900 440")
+  const W = Math.max(300, Math.min(container.clientWidth || 900, 1000));
+  const narrow = W < 560;
+  const H = narrow ? 320 : Math.round(Math.min(440, W * 0.5));
+  const margin = narrow ? { top: 34, right: 18, bottom: 48, left: 56 } : { top: 35, right: 35, bottom: 60, left: 90 };
+  const width = W - margin.left - margin.right;
+  const height = H - margin.top - margin.bottom;
+  const labelSize = narrow ? 11 : 13;
+  const chart = root.append("svg").attr("viewBox", `0 0 ${W} ${H}`)
     .attr("role", "img").attr("aria-label", `Total greenhouse gas emissions from ${first.year} to ${last.year}. ${options.zeroBaseline ? "Zero" : "Truncated"} y-axis baseline.`);
   chart.append("title").text(`Emissions in ${first.year}: ${formatMt(first.mt)}; in ${last.year}: ${formatMt(last.mt)}.`);
   const svg = chart.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
@@ -206,11 +213,12 @@ function renderEmissionsLine(container, options) {
       .call(g => g.select(".domain").remove());
     svg.append("g").attr("class", "axis").attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(xScale).tickValues(options.fullPeriod
-        ? [1990, 1995, 2000, 2005, 2010, 2015, 2020, 2022]
-        : [2007, 2010, 2013, 2016, 2020]).tickFormat(d3.format("d")));
+        ? (narrow ? [1990, 2000, 2010, 2022] : [1990, 1995, 2000, 2005, 2010, 2015, 2020, 2022])
+        : (narrow ? [2007, 2013, 2020] : [2007, 2010, 2013, 2016, 2020])).tickFormat(d3.format("d")));
     svg.append("g").attr("class", "axis").call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(",.0f")));
-    svg.append("text").attr("x", 0).attr("y", -16).attr("class", "emissions-unit").text("Million tonnes CO₂ equivalent (Mt CO₂e)");
-    svg.append("text").attr("x", width / 2).attr("y", height + 45).attr("text-anchor", "middle").text("Year");
+    svg.append("text").attr("x", 0).attr("y", -16).attr("class", "emissions-unit").style("font-size", narrow ? "11px" : null).text("Million tonnes CO₂ equivalent (Mt CO₂e)");
+    svg.append("text").attr("x", width / 2).attr("y", height + (narrow ? 40 : 45)).attr("text-anchor", "middle")
+      .attr("font-size", 12).style("fill", "var(--muted)").text("Year");
   }
 
   function updateVis() {
@@ -225,12 +233,12 @@ function renderEmissionsLine(container, options) {
       window.selectAll("line").data([2007, 2020]).join("line")
         .attr("x1", d => xScale(d)).attr("x2", d => xScale(d))
         .attr("y1", 0).attr("y2", height)
-        .attr("stroke", "#946000").attr("stroke-dasharray", "4 4");
+        .style("stroke", "var(--warn-line)").attr("stroke-dasharray", "4 4");
       svg.append("text")
         .attr("x", (xScale(2007) + xScale(2020)) / 2).attr("y", 18)
-        .attr("text-anchor", "middle").attr("fill", "#805200")
-        .attr("font-size", 13).attr("font-weight", 600)
-        .text("2007–2020: window used in distorted chart");
+        .attr("text-anchor", "middle").style("fill", "var(--warn-ink)")
+        .attr("font-size", labelSize).attr("font-weight", 600)
+        .text(narrow ? "2007–2020 window" : "2007–2020: window used in distorted chart");
     }
     svg.append("path").datum(plotted).attr("fill", "none").attr("stroke", color)
       .attr("stroke-width", 3).attr("stroke-linejoin", "round")
@@ -238,7 +246,7 @@ function renderEmissionsLine(container, options) {
     svg.selectAll(".emissions-point").data(plotted, d => d.year).join("circle")
       .attr("class", "emissions-point").attr("cx", d => xScale(d.year))
       .attr("cy", d => yScale(d.mt)).attr("r", 5).attr("fill", color)
-      .attr("stroke", "#fff").attr("stroke-width", 1.5)
+      .style("stroke", "var(--surface)").attr("stroke-width", 1.5)
       .on("mousemove", (event, d) => {
         lineTooltip = lineTooltip || createTooltip();
         lineTooltip.show(
@@ -249,10 +257,10 @@ function renderEmissionsLine(container, options) {
     if (!options.neutralHeadline) {
       // Direct labels draw the eye to the two endpoints that make the decline look largest.
       svg.append("text").attr("x", xScale(first.year) + 10).attr("y", yScale(first.mt) - 12)
-        .attr("font-size", 13).attr("font-weight", 600).attr("fill", "#1c1c1c")
+        .attr("font-size", labelSize).attr("font-weight", 600)
         .text(`${first.year}: ${formatMt(first.mt)}`);
       svg.append("text").attr("x", xScale(last.year) - 10).attr("y", yScale(last.mt) - 14)
-        .attr("text-anchor", "end").attr("font-size", 15).attr("font-weight", 700).attr("fill", "#006e51")
+        .attr("text-anchor", "end").attr("font-size", narrow ? 12.5 : 15).attr("font-weight", 700).style("fill", "var(--good-ink)")
         .text(`${formatPct(last.mt / first.mt - 1)} since ${first.year}`);
     }
   }
@@ -447,63 +455,69 @@ function renderChangeByCountry(container, state) {
     [{ k: "value", label: "By value" }, { k: "alpha", label: "A–Z" }],
     changeSort, k => { changeSort = k; }, "secondary", "Sort");
 
-  const W = 1000, rowH = 20, sep = 14;
-  const m = { top: 52, bottom: 48, left: 185 };
-  const panelW = 560;
+  const W = Math.max(320, Math.min(container.clientWidth || 1000, 1100));
+  const narrow = W < 620;
+  const rowH = 20, sep = 14;
+  const m = narrow ? { top: 46, bottom: 44, left: 112, right: 26 } : { top: 52, bottom: 48, left: 185, right: 150 };
+  const panelW = W - m.left - m.right;
+  const labelSize = narrow ? 11 : 12.5, valueSize = narrow ? 10.5 : 11.5;
+  const rowLabel = d => (narrow && d.country.length > 17 ? `${d.country.slice(0, 16)}…` : d.country);
   const H = m.top + rowH * (rows.length + 1) + sep + m.bottom;
   const innerH = H - m.top - m.bottom;
 
   const all = [total, ...rows];
   const y = d => (d.isTotal ? 0 : rowH + sep + rows.indexOf(d) * rowH);
   const [lo, hi] = d3.extent(all, d => d[key]);
-  const pad = (Math.max(hi, 0) - Math.min(lo, 0)) * 0.12;
+  const pad = (Math.max(hi, 0) - Math.min(lo, 0)) * (narrow ? 0.14 : 0.12);
   const x = d3.scaleLinear().domain([Math.min(lo, 0) - pad, Math.max(hi, 0) + pad]).nice().range([0, panelW]);
 
   const svg = root.append("svg").attr("viewBox", `0 0 ${W} ${H}`)
     .attr("role", "img")
     .attr("aria-label", `Bar chart of the ${key === "pct" ? "percent" : "absolute"} change in greenhouse gas emissions for ${rows.length} countries from ${startYear} to ${endYear}. The cohort total changed ${formatPct(total.pct)} (${formatMt(total.abs)}).`);
   svg.append("title").text(`Change in emissions by country, ${startYear}–${endYear}`);
-  svg.append("text").attr("x", m.left).attr("y", 20).attr("font-weight", 600).attr("font-size", 13).text(M.title);
+  svg.append("text").attr("x", narrow ? 8 : m.left).attr("y", 20).attr("font-weight", 600).attr("font-size", narrow ? 12 : 13).text(M.title);
   const g = svg.append("g").attr("transform", `translate(0,${m.top})`);
   const pg = g.append("g").attr("transform", `translate(${m.left},0)`);
 
   pg.append("g").attr("class", "emissions-grid")
-    .call(d3.axisBottom(x).ticks(7).tickSize(innerH).tickFormat(""))
+    .call(d3.axisBottom(x).ticks(narrow ? 4 : 7).tickSize(innerH).tickFormat(""))
     .call(a => a.select(".domain").remove());
   pg.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
-    .call(d3.axisBottom(x).ticks(7).tickFormat(M.tick));
+    .call(d3.axisBottom(x).ticks(narrow ? 4 : 7).tickFormat(M.tick));
 
   pg.selectAll(".bar").data(all).join("rect").attr("class", "bar")
     .attr("x", d => x(Math.min(0, d[key])))
     .attr("width", d => Math.abs(x(d[key]) - x(0)))
     .attr("y", d => y(d) + 3).attr("height", rowH - 6)
     .attr("fill", d => (d[key] < 0 ? palette.blue : palette.vermillion))
-    .attr("stroke", d => (d.isTotal ? "#000" : "none")).attr("stroke-width", 1.5);
+    .style("stroke", d => (d.isTotal ? "var(--text)" : "none")).attr("stroke-width", 1.5);
   pg.selectAll(".val").data(all).join("text").attr("class", "val")
-    .attr("x", d => x(d[key]) + (d[key] < 0 ? -4 : 4))
+    // On narrow screens negative values are labelled just right of the zero line,
+    // so they never run into the country names.
+    .attr("x", d => (d[key] < 0 && narrow ? x(0) + 4 : x(d[key]) + (d[key] < 0 ? -4 : 4)))
     .attr("y", d => y(d) + rowH / 2 + 4)
-    .attr("text-anchor", d => (d[key] < 0 ? "end" : "start"))
-    .attr("font-size", 11.5).attr("font-weight", d => (d.isTotal ? 700 : 400))
+    .attr("text-anchor", d => (d[key] < 0 && !narrow ? "end" : "start"))
+    .attr("font-size", valueSize).attr("font-weight", d => (d.isTotal ? 700 : 400))
     .text(d => M.fmt(d[key]));
   pg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", innerH)
-    .attr("stroke", "#1c1c1c").attr("stroke-width", 1.25);
+    .style("stroke", "var(--text)").attr("stroke-width", 1.25);
   pg.append("line").attr("x1", 0).attr("x2", panelW).attr("y1", rowH + sep / 2).attr("y2", rowH + sep / 2)
-    .attr("stroke", "#999").attr("stroke-dasharray", "3 3");
+    .style("stroke", "var(--border-strong)");
 
   g.selectAll(".row-label").data(all).join("text").attr("class", "row-label")
     .attr("x", m.left - 8).attr("y", d => y(d) + rowH / 2 + 4).attr("text-anchor", "end")
-    .attr("font-size", 12.5).attr("font-weight", d => (d.isTotal ? 700 : 400)).text(d => d.country);
+    .attr("font-size", labelSize).attr("font-weight", d => (d.isTotal ? 700 : 400)).text(rowLabel);
 
   // Callouts for the largest cut and largest rise of the measure on screen.
   const minRow = rows.reduce((b, d) => (d[key] < b[key] ? d : b), rows[0]);
   const maxRow = rows.reduce((b, d) => (d[key] > b[key] ? d : b), rows[0]);
   const noteRows = [];
-  if (minRow[key] < 0) noteRows.push({ d: minRow, text: "Largest cut", color: "#005a8c" });
-  if (maxRow[key] > 0) noteRows.push({ d: maxRow, text: "Largest rise", color: "#a84800" });
-  g.selectAll(".callout").data(noteRows).join("text").attr("class", "callout")
+  if (minRow[key] < 0) noteRows.push({ d: minRow, text: "Largest cut", color: "var(--cut-ink)" });
+  if (maxRow[key] > 0) noteRows.push({ d: maxRow, text: "Largest rise", color: "var(--rise-ink)" });
+  g.selectAll(".callout").data(narrow ? [] : noteRows).join("text").attr("class", "callout")
     .attr("x", m.left + panelW + 20).attr("y", n => y(n.d) + rowH / 2 + 4)
-    .attr("font-size", 11.5).attr("font-weight", 700).attr("fill", n => n.color)
-    .text(n => `◄ ${n.text}`);
+    .attr("font-size", 11.5).attr("font-weight", 700).style("fill", n => n.color)
+    .text(n => `← ${n.text}`);
 
   changeTooltip = changeTooltip || createTooltip();
   const tipHtml = d =>
@@ -554,6 +568,47 @@ function renderChangeByCountry(container, state) {
 }
 
 
+// ---- Overview: dataset at a glance ---------------------------------------
+function renderOverview(container) {
+  const root = d3.select(container);
+  root.selectAll("*").remove();
+  const rows = dataStore.countryRows().filter(d => d.measure === "excl");
+  const codes = new Set(rows.map(d => d.code));
+  const [winStart, winEnd] = [1990, 2022];
+  const complete = dataStore.completeCountries("excl", winStart, winEnd).length;
+  const left = codes.size - complete;
+  const tiles = [
+    { cls: "kpi-primary", label: "Countries with complete data", value: formatInt(complete),
+      unit: `of ${formatInt(codes.size)} reporting`,
+      bar: [complete, left],
+      legend: [
+        { color: palette.blue, text: `${complete} used in every chart` },
+        { color: palette.orange, text: `${left} left out (gaps in ${winStart}–${winEnd})` }
+      ],
+      link: { href: "#coverage", text: "See which countries" } },
+    { label: "Period analysed", value: `${winStart}–${winEnd}`,
+      sub: `${winEnd - winStart + 1} years. The data file spans ${d3.min(rows, d => d.year)}–${d3.max(rows, d => d.year)}.` },
+    { label: "Measure", value: "Total GHG",
+      sub: "Excluding land use, in million tonnes CO₂ equivalent (Mt)." }
+  ];
+  const tile = root.selectAll("div.kpi").data(tiles).join("div")
+    .attr("class", d => `kpi${d.cls ? ` ${d.cls}` : ""}`);
+  tile.append("span").attr("class", "kpi-label").text(d => d.label);
+  const value = tile.append("span").attr("class", "kpi-value").text(d => d.value);
+  value.filter(d => d.unit).append("span").attr("class", "kpi-unit").text(d => d.unit);
+  tile.filter(d => d.sub).append("span").attr("class", "kpi-sub").text(d => d.sub);
+  tile.filter(d => d.bar).append("div").attr("class", "kpi-bar").attr("aria-hidden", "true")
+    .selectAll("span").data(d => d.bar).join("span")
+    .style("flex", v => String(v)).style("background", (v, i) => (i === 0 ? palette.blue : palette.orange));
+  const legend = tile.filter(d => d.legend).append("ul").attr("class", "kpi-legend");
+  legend.selectAll("li").data(d => d.legend).join("li").each(function (item) {
+    d3.select(this).append("span").attr("class", "wh-swatch").attr("aria-hidden", "true").style("background", item.color);
+    d3.select(this).append("span").text(item.text);
+  });
+  tile.filter(d => d.link).append("a").attr("class", "kpi-link")
+    .attr("href", d => d.link.href).text(d => `${d.link.text} →`);
+}
+
 // ---- White hat: which countries report which years -------------------------
 let coverageOpen = false;
 
@@ -586,11 +641,11 @@ function renderCoverage(container) {
   const legendItems = [
     { text: `Data reported, used in the charts (${included.length})`, color: palette.blue },
     { text: `Data reported, left out (${left.length})`, color: palette.orange },
-    { text: "No data that year", color: "#e6e9e7" }
+    { text: "No data that year", color: "var(--track)" }
   ];
   const li = legend.selectAll("li").data(legendItems).join("li").attr("class", "wh-chip");
   li.append("span").attr("class", "wh-swatch").attr("aria-hidden", "true").style("background", d => d.color)
-    .style("border", "1px solid #999");
+    .style("border", "1px solid var(--border-strong)");
   li.append("span").text(d => d.text);
 
   const yearMin = d3.min(countries, c => c.min), yearMax = d3.max(countries, c => c.max);
@@ -628,6 +683,9 @@ function renderCoverage(container) {
     .call(d3.axisTop(x).tickValues(tickYears).tickSize(4).tickFormat(d3.format("d")))
     .call(a => a.select(".domain").remove());
 
+  axisSvg.append("text").attr("x", margin.left - 8).attr("y", 26).attr("text-anchor", "end")
+    .attr("font-size", 11).style("fill", "var(--muted)").text("Year");
+
   const svg = scroller.append("svg").attr("viewBox", `0 0 ${W} ${bodyH}`).attr("role", "img")
     .attr("aria-label", `Grid of which years each of ${countries.length} countries reports data. ${included.length} report every year from ${winStart} to ${winEnd}; ${left.length} do not.`);
   const g = svg.append("g").attr("transform", `translate(${margin.left},0)`);
@@ -637,7 +695,7 @@ function renderCoverage(container) {
     .attr("transform", d => `translate(0,${d.y})`);
   rowsG.append("title").text(d =>
     `${d.country}: ${d.count} years of data (${d.min}–${d.max})${d.gaps ? `, ${d.gaps} missing in between` : ""}`);
-  rowsG.append("rect").attr("x", 0).attr("y", 1).attr("width", plotW).attr("height", rowH - 2).attr("fill", "#e6e9e7");
+  rowsG.append("rect").attr("x", 0).attr("y", 1).attr("width", plotW).attr("height", rowH - 2).style("fill", "var(--track)");
   rowsG.each(function (d) {
     d3.select(this).selectAll("rect.yr").data([...d.years]).join("rect").attr("class", "yr")
       .attr("x", yr => x(yr)).attr("y", 1).attr("width", x.bandwidth()).attr("height", rowH - 2)
@@ -653,7 +711,7 @@ function renderCoverage(container) {
   for (const yr of [winStart, winEnd]) {
     const lx = margin.left + x(yr) + (yr === winStart ? 0 : x.bandwidth());
     svg.append("line").attr("x1", lx).attr("x2", lx).attr("y1", 0).attr("y2", bodyH)
-      .attr("stroke", "#1c1c1c").attr("stroke-dasharray", "4 3").attr("pointer-events", "none");
+      .style("stroke", "var(--text)").attr("stroke-dasharray", "4 3").attr("pointer-events", "none");
   }
 
   panel.append("p").attr("class", "caption").text(
@@ -708,18 +766,21 @@ function renderCherryHeatmap(container) {
   }
 
   // Geometry: x = end year, y = start year.
-  const margin = { top: 56, right: 250, bottom: 24, left: 64 };
-  const cell = 18;
+  const available = Math.max(300, Math.min(container.clientWidth || 900, 1100));
+  const narrow = available < 700;
+  const margin = narrow ? { top: 48, right: 10, bottom: 100, left: 56 } : { top: 56, right: 250, bottom: 24, left: 64 };
+  const cell = narrow ? Math.max(6, Math.floor((available - margin.left - margin.right) / (years.length - 1))) : 18;
   const plotW = cell * (years.length - 1), plotH = cell * (years.length - 1);
   const W = margin.left + plotW + margin.right, H = margin.top + plotH + margin.bottom;
   const x = d3.scaleBand().domain(years.slice(1)).range([0, plotW]);
   const y = d3.scaleBand().domain(years.slice(0, -1)).range([0, plotH]);
   const maxAbs = d3.max(windows, w => Math.abs(w.pct));
-  const interpolator = d3.interpolateRgbBasis([palette.blue, "#f7f7f5", palette.vermillion]);
+  const interpolator = d3.interpolateRgbBasis([palette.blue, cssVar("--surface-2"), palette.vermillion]);
   const color = d3.scaleDiverging(interpolator).domain([-maxAbs, 0, maxAbs]);
 
   const wrap = root.append("div").attr("class", "cherry-wrap");
-  const svg = wrap.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
+  if (!narrow) wrap.attr("tabindex", "0").attr("role", "region").attr("aria-label", "Heatmap, scrollable");
+  const svg = wrap.append("svg").classed("cherry-fit", narrow).attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
     .attr("aria-label", `Heatmap of the change in total emissions for every start year and end year from ${first} to ${last}. ${nRise} of ${windows.length} windows show a rise.${bh ? ` The ${bhStart} to ${bhEnd} window, ${formatPct(bh.pct)}, is ranked ${rank} for how flattering it is.` : ""}`);
   svg.append("title").text("Change in total emissions for every possible time window");
   const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
@@ -734,7 +795,12 @@ function renderCherryHeatmap(container) {
       event.clientX, event.clientY))
     .on("mouseleave", () => cherryTooltip.hide());
 
-  const tickYears = domain => domain.filter(v => v % 5 === 0 || v === domain[domain.length - 1]);
+  const tickYears = domain => {
+    const lastYear = domain[domain.length - 1];
+    return narrow
+      ? domain.filter(v => (v % 10 === 0 && lastYear - v >= 4) || v === lastYear)
+      : domain.filter(v => v % 5 === 0 || v === lastYear);
+  };
   g.append("g").attr("class", "axis")
     .call(d3.axisTop(x).tickValues(tickYears(x.domain())).tickSize(3).tickFormat(d3.format("d")))
     .call(a => a.select(".domain").remove());
@@ -743,7 +809,7 @@ function renderCherryHeatmap(container) {
     .call(a => a.select(".domain").remove());
   svg.append("text").attr("x", margin.left).attr("y", 14).attr("font-weight", 600).attr("font-size", 13)
     .text("End year →");
-  svg.append("text").attr("transform", `translate(14,${margin.top + plotH / 2}) rotate(-90)`)
+  svg.append("text").attr("transform", `translate(${narrow ? 10 : 14},${margin.top + plotH / 2}) rotate(-90)`)
     .attr("text-anchor", "middle").attr("font-weight", 600).attr("font-size", 13).text("Start year →");
 
   // The window used by the black hat chart.
@@ -751,18 +817,22 @@ function renderCherryHeatmap(container) {
     const cx = x(bhEnd), cy = y(bhStart);
     g.append("rect").attr("x", cx - 1).attr("y", cy - 1)
       .attr("width", x.bandwidth() + 1).attr("height", y.bandwidth() + 1)
-      .attr("fill", "none").attr("stroke", "#000").attr("stroke-width", 2.5).attr("pointer-events", "none");
-    const midY = cy + y.bandwidth() / 2;
-    g.append("line").attr("x1", cx + x.bandwidth() + 2).attr("x2", plotW + 16)
-      .attr("y1", midY).attr("y2", midY).attr("stroke", "#000").attr("pointer-events", "none");
-    g.append("text").attr("x", plotW + 22).attr("y", midY - 2).attr("font-size", 13).attr("font-weight", 700)
-      .text(`${bhStart}→${bhEnd}: ${formatPct(bh.pct)}`);
-    g.append("text").attr("x", plotW + 22).attr("y", midY + 14).attr("font-size", 12).attr("fill", "#5a5a5a")
-      .text("window used in the black hat chart");
+      .attr("fill", "none").style("stroke", "var(--text)").attr("stroke-width", 2.5).attr("pointer-events", "none");
+    if (!narrow) {
+      const midY = cy + y.bandwidth() / 2;
+      g.append("line").attr("x1", cx + x.bandwidth() + 2).attr("x2", plotW + 16)
+        .attr("y1", midY).attr("y2", midY).style("stroke", "var(--text)").attr("pointer-events", "none");
+      g.append("text").attr("x", plotW + 22).attr("y", midY - 2).attr("font-size", 13).attr("font-weight", 700)
+        .text(`${bhStart}→${bhEnd}: ${formatPct(bh.pct)}`);
+      g.append("text").attr("x", plotW + 22).attr("y", midY + 14).attr("font-size", 12).style("fill", "var(--muted)")
+        .text("window used in the black hat chart");
+    }
   }
 
   // Legend (diverging, zero marked).
-  const legW = 190, legX = margin.left + plotW + 28, legY = margin.top + 6;
+  const legW = narrow ? Math.min(220, W - margin.left - 12) : 190;
+  const legX = narrow ? margin.left : margin.left + plotW + 28;
+  const legY = narrow ? margin.top + plotH + 30 : margin.top + 6;
   const gradId = "cherry-gradient";
   const defs = svg.append("defs");
   const grad = defs.append("linearGradient").attr("id", gradId);
@@ -770,18 +840,22 @@ function renderCherryHeatmap(container) {
   svg.append("text").attr("x", legX).attr("y", legY - 8).attr("font-size", 12).attr("font-weight", 600)
     .text("Change in total emissions");
   svg.append("rect").attr("x", legX).attr("y", legY).attr("width", legW).attr("height", 12)
-    .attr("fill", `url(#${gradId})`).attr("stroke", "#999");
+    .attr("fill", `url(#${gradId})`).style("stroke", "var(--border-strong)");
   svg.append("line").attr("x1", legX + legW / 2).attr("x2", legX + legW / 2).attr("y1", legY - 2).attr("y2", legY + 14)
-    .attr("stroke", "#1c1c1c");
+    .style("stroke", "var(--text)");
   const legendLabel = (px, anchor, txt) => svg.append("text").attr("x", px).attr("y", legY + 28)
-    .attr("text-anchor", anchor).attr("font-size", 11).attr("fill", "#1c1c1c").text(txt);
+    .attr("text-anchor", anchor).attr("font-size", 11).text(txt);
   legendLabel(legX, "start", d3.format("+.0%")(-maxAbs));
   legendLabel(legX + legW / 2, "middle", "0%");
   legendLabel(legX + legW, "end", d3.format("+.0%")(maxAbs));
-  svg.append("text").attr("x", legX).attr("y", legY + 44).attr("font-size", 11).attr("fill", "#5a5a5a").text("← emissions fell");
+  svg.append("text").attr("x", legX).attr("y", legY + 44).attr("font-size", 11).style("fill", "var(--muted)").text("← emissions fell");
   svg.append("text").attr("x", legX + legW).attr("y", legY + 44).attr("text-anchor", "end")
-    .attr("font-size", 11).attr("fill", "#5a5a5a").text("emissions rose →");
+    .attr("font-size", 11).style("fill", "var(--muted)").text("emissions rose →");
 
+  if (narrow && bh) {
+    root.append("p").attr("class", "caption").text(
+      `Outlined cell: ${bhStart}→${bhEnd} (${formatPct(bh.pct)}), the window used in the black hat chart.`);
+  }
   root.append("p").attr("class", "caption").text(
     "Only windows that run forward in time are shown (end year after start year). Same countries and totals as the black hat chart. Source: OECD Air Emissions GHG Inventories (DF_AIR_GHG), data/emissions.csv.");
   const details = root.append("details").attr("class", "caption");
@@ -795,6 +869,12 @@ const views = {
     name: "Change by country",
     render(container, state) {
       renderChangeByCountry(container, state);
+    }
+  },
+  overview: {
+    name: "Dataset at a glance",
+    render(container) {
+      renderOverview(container);
     }
   },
   coverage: {
@@ -854,9 +934,20 @@ async function init() {
   setupNav();
   try {
     const rows = await dataStore.load();
-    status.textContent = `Loaded ${formatInt(rows.length)} GHG records (${formatInt(dataStore.countryRows().length)} excluding aggregates).`;
+    status.textContent = "";
     renderAll();
     state.subscribe(renderAll);
+    // Charts are drawn at the container's pixel width, so redraw when the width changes,
+    // and when the colour scheme changes (the heatmap reads its midpoint colour from CSS).
+    let lastWidth = document.documentElement.clientWidth, timer;
+    window.addEventListener("resize", () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const w = document.documentElement.clientWidth;
+        if (Math.abs(w - lastWidth) > 24) { lastWidth = w; renderAll(); }
+      }, 200);
+    });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
   } catch (error) {
     console.error("Error loading data:", error);
     status.classList.add("error");

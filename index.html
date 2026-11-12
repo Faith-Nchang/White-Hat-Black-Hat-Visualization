@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>White Hat / Black Hat: Greenhouse Gas Emissions</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
   <link href="css/styles.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" defer></script>
   <script src="js/script.js" defer></script>
@@ -11,29 +15,36 @@
 <body>
   <a class="skip-link" href="#white-hat">Skip to content</a>
 
-  <header class="site-header">
-    <div class="wrap">
-      <h1>White Hat / Black Hat: Greenhouse Gas Emissions</h1>
-      <p class="lede">The same national emissions data drawn honestly and then deliberately distorted, to show how design choices change what a chart says.</p>
-      <p class="source">Data source: OECD Air Emissions GHG Inventories (DF_AIR_GHG).</p>
-    </div>
-  </header>
-
-  <nav class="site-nav" aria-label="Page sections">
-    <div class="wrap">
+  <div class="app">
+    <nav class="site-nav" aria-label="Page sections">
+      <div class="nav-brand">
+        <span class="nav-brand-title">White Hat / Black Hat</span>
+        <span class="nav-brand-sub">Greenhouse gas emissions</span>
+      </div>
       <ul>
+        <li><a href="#overview">Overview</a></li>
         <li><a href="#white-hat">White Hat</a></li>
         <li><a href="#black-hat">Black Hat</a></li>
         <li><a href="#writeups">Write-ups</a></li>
         <li><a href="#reveal">Review the distortions</a></li>
         <li><a href="#appendix">Appendix</a></li>
+        <li><a href="#appendix-extra">Extra credit</a></li>
       </ul>
-    </div>
-  </nav>
+      <p class="nav-source">Data: OECD Air Emissions GHG Inventories (DF_AIR_GHG)</p>
+    </nav>
 
-  <div id="load-status" class="wrap" role="status" aria-live="polite">Loading emissions data…</div>
+    <div class="app-main">
+      <header class="site-header">
+        <p class="eyebrow">CMSC 471 &middot; Assignment 2</p>
+        <h1>White Hat / Black Hat: Greenhouse Gas Emissions</h1>
+      </header>
 
-  <main class="wrap">
+      <section class="kpi-row" id="overview" aria-label="Dataset at a glance" data-view="overview">
+        <div class="kpi-grid" data-chart></div>
+      </section>
+      <p id="load-status" class="data-note" role="status" aria-live="polite">Loading emissions data&hellip;</p>
+
+      <main>
     <section id="white-hat" aria-labelledby="white-hat-title">
       <h2 id="white-hat-title">White Hat</h2>
       <article class="card" id="ec-accessibility" data-view="changeByCountry">
@@ -43,7 +54,7 @@
         <p class="caption" data-caption></p>
       </article>
 
-      <article class="card" data-view="coverage">
+      <article class="card" id="coverage" data-view="coverage">
         <h3>Which countries report which years?</h3>
         <div class="chart" data-chart></div>
       </article>
@@ -52,6 +63,7 @@
     <section id="black-hat" aria-labelledby="black-hat-title">
       <h2 id="black-hat-title">Black Hat</h2>
       <article class="card" data-view="blackHat1">
+        <h3>Emissions over time</h3>
         <div class="chart" data-chart></div>
         <p class="caption" data-caption></p>
       </article>
@@ -105,6 +117,92 @@
 
     <section id="appendix" aria-labelledby="appendix-title">
       <h2 id="appendix-title">Appendix</h2>
+      <article class="card" id="appendix-data">
+        <h3>Data and references</h3>
+
+        <h4>Data source</h4>
+        <p>OECD, Air Emissions GHG Inventories (dataset DF_AIR_GHG), from the OECD Data Explorer: <a href="https://data-explorer.oecd.org/vis?df[ds]=DisseminateFinalDMZ&amp;df[id]=DSD_AIR_GHG@DF_AIR_GHG&amp;df[ag]=OECD.ENV.EPI">data-explorer.oecd.org, DSD_AIR_GHG@DF_AIR_GHG</a>. The OECD publishes national greenhouse gas inventories by country, year, pollutant and measure.</p>
+
+        <h4>How we prepared the data</h4>
+        <ul>
+          <li>We downloaded the full dataset (649,251 rows and 30 columns). It is too large to publish with the site (178 MB), so the site loads a reduced file, <code>data/emissions.csv</code>.</li>
+          <li>We kept only the combined greenhouse gas total (all gases, in CO&#8322; equivalent) and three measures: the total excluding land use, the total including land use, and land use and forestry alone. Every chart on this page uses the total excluding land use. This reduced the data to 8,156 rows and 7 columns.</li>
+          <li>We converted values to million tonnes CO&#8322; equivalent (the reported value times its unit multiplier, divided by 1,000,000) and checked every kept row against the original. The largest difference was 0.0005 Mt, from rounding.</li>
+          <li>Five regional aggregates, such as the EU and OECD totals, are flagged and left out of every country chart and sum, so nothing is counted twice. That leaves 93 countries.</li>
+          <li>Missing observations stay missing. They are never filled in or drawn as zero.</li>
+          <li>The file covers 1985&ndash;2024, and the assignment describes 1990&ndash;2018. We use 1990&ndash;2022, and only the 61 countries that report every year in that period.</li>
+        </ul>
+
+        <h4>Tools and credits</h4>
+        <ul>
+          <li>D3.js v7.9.0 (Mike Bostock and contributors), loaded from the jsDelivr CDN, draws every chart.</li>
+          <li>Inter and Source Serif 4 are loaded from Google Fonts.</li>
+          <li>The code and page were written with AI assistance; see the AI usage card below.</li>
+        </ul>
+      </article>
+      <article class="card" id="appendix-process">
+        <h3>Development process</h3>
+      </article>
+      <article class="card" id="appendix-ai">
+        <h3>AI usage and reflection</h3>
+
+        <h4>Our approach: AI as a research assistant, design critic, and validation tool</h4>
+        <p>We used <strong>Claude Code (Claude Sonnet 5.5)</strong> throughout the project for code generation, exploratory data analysis, design evaluation, and iterative refinement. However, our most meaningful use of AI went beyond generating code. We used it to explore how data can be presented honestly or misleadingly, evaluate our visualizations against the rubric, identify weaknesses in our designs, and investigate alternative approaches.</p>
+        <p>Our team retained responsibility for choosing the dataset, developing the white hat and black hat narratives, evaluating AI-generated suggestions, determining which features to implement or reject, and finalizing the visualizations and written explanations.</p>
+
+        <h4>1. Novel use: Investigating how data selection can manipulate a narrative</h4>
+        <p>One of our most significant uses of AI was exploring how the same greenhouse gas emissions dataset could support different interpretations depending on the selected time period.</p>
+        <p>Our exploratory analysis script tested how sensitive the totals were to the choice of time window and surfaced the 2007 peak and the 2020 COVID-era low. Later, when we built the cherry-picking heatmap, Claude evaluated <strong>528 candidate windows</strong> and confirmed that 2007&ndash;2020 is the most favorable interval, with a reported emissions reduction of <strong>13.6%</strong>. More than half of the windows show emissions rising. By comparison, the complete 1990&ndash;2022 period showed a reduction of only <strong>2.4%</strong>.</p>
+        <p>This supports our black hat visualization: it shows how selectively presenting an accurate subset of data can create a misleading impression without falsifying the underlying values.</p>
+        <p>We also used AI to evaluate how changes in framing, titles, annotations, and visual presentation could influence interpretation. This connected computational analysis directly to the design and ethical objectives of the assignment.</p>
+
+        <h4>2. AI-assisted design evaluation and iteration</h4>
+        <p>We repeatedly asked Claude to evaluate our visualizations against individual rubric criteria rather than simply asking whether the charts looked good.</p>
+        <p>For the <strong>white hat visualization</strong>, its evaluations identified several weaknesses:</p>
+        <ul>
+          <li>The second panel was not consistently sorted.</li>
+          <li>The visual encoding lacked a sufficiently clear legend.</li>
+          <li>Excluded countries were counted but not explicitly identified.</li>
+          <li>Important increases and decreases were not emphasized clearly enough.</li>
+        </ul>
+        <p>We used these findings to improve the visualization through clearer legends, callouts for the largest increase and decrease, improved ordering, and a named list of excluded countries.</p>
+        <p>For the <strong>black hat visualization</strong>, Claude identified a contradiction between our written explanation and the actual page: our write-up claimed that the date range was concealed, even though it appeared in the subtitle. We revised the implementation and explanation to ensure our claims accurately described the finished visualization.</p>
+        <p>AI also helped us evaluate scope. Initially, we had three white hat visualizations and two black hat visualizations. We questioned whether we were prioritizing quantity over quality and asked Claude to evaluate our approach. Its feedback reinforced our decision to focus on fewer, more polished views rather than adding features that did not meaningfully improve the project.</p>
+
+        <h4>3. Critical reflection: Where AI was wrong and how we responded</h4>
+        <p>We did not automatically accept Claude&rsquo;s outputs. Several recommendations were inaccurate, unclear, or unsuitable for our design goals.</p>
+        <ul>
+          <li><strong>Confusing Ukraine-adjusted comparison.</strong> Claude proposed and implemented a feature showing emissions totals without Ukraine, first as a toggle and later as an additional total row with a hover chart. Although analytically interesting, we found both implementations difficult to interpret. We removed the feature instead of keeping it merely because the code had already been written.</li>
+          <li><strong>Inconsistent unit conversion.</strong> While auditing our reduced dataset, Claude identified inconsistent unit handling across two scripts. We consolidated the conversion into one script and added assertions to prevent similar discrepancies.</li>
+          <li><strong>Interaction and narrative decisions.</strong> Claude initially generated sort controls that were too small. We revised their sizing. It also recommended placing the reveal section immediately beside the black hat chart, but we chose to position it after the written explanations to preserve the intended narrative sequence.</li>
+        </ul>
+        <p>These cases reinforced an important lesson: <strong>AI-generated solutions still require verification, usability evaluation, and human judgment.</strong> We treated its recommendations as proposals to test rather than instructions to follow.</p>
+
+        <h4>4. Documentation of key iterations</h4>
+        <p>The following table summarizes representative prompts from our development process, the AI&rsquo;s contributions, and our final decisions. Prompts are reproduced from our interactions and shortened where they included lengthy pasted material.</p>
+        <table class="ai-table">
+          <thead><tr><th>Phase</th><th>Sample prompt</th><th>AI contribution</th><th>Our decision</th></tr></thead>
+          <tbody>
+            <tr><td>Data exploration</td><td><q>acting as an advanced data visualizer &hellip; using the greenhouse gas data, do some EDA using a script to find the best points to approach</q></td><td>Generated an exploratory script examining aggregates, time windows, and ranking sensitivity.</td><td>Used the findings after correcting an initial draft that ran without the actual data file.</td></tr>
+            <tr><td>Data validation</td><td><q>Does emissions.csv reflect real data? How is it smaller?</q></td><td>Compared 8,156 processed rows against the 649,251-row original, finding a maximum difference of 0.0005 Mt and inconsistent unit handling.</td><td>Centralized unit conversion and added validation assertions.</td></tr>
+            <tr><td>Design scoping</td><td><q>since i have 3 white hat visualizations and 2 black hat visualization, am I having now just quantity instead of quality</q></td><td>Evaluated whether having five visualizations improved the project or introduced unnecessary complexity. Recommended prioritizing fewer, more polished views.</td><td>Reduced scope to one white hat chart with a coverage grid and one black hat chart.</td></tr>
+            <tr><td>White hat evaluation</td><td><q>how is the best way to visualize all the countries and their change in gas emissions from 1990 to 2022</q></td><td>Explored visual approaches for comparing emissions changes across countries while maintaining readability and making important differences visible.</td><td>We decided to use a diverging bar chart, with clear ordering, legend chips, callouts for the largest changes, and a named list of excluded countries.</td></tr>
+            <tr><td>Black hat evaluation</td><td><q>does the blackhat fulfill this in writeup and our viz</q> (with the rubric)</td><td>Identified concerns about subtlety, a contradiction in the explanation, and an inaccurate claim.</td><td>Revised the headline, removed the end year from the subtitle, and corrected the write-up.</td></tr>
+            <tr><td>Rejected feature</td><td><q>how can we incorporate the ukraine feature in the white hat chart</q></td><td>Generated two alternative implementations for excluding Ukraine.</td><td>Rejected both because they complicated the visualization without sufficiently improving clarity.</td></tr>
+          </tbody>
+        </table>
+
+        <h4>5. Why our approach is innovative</h4>
+        <p>Our approach was innovative because we used AI not only to produce a visualization, but also to <strong>investigate the relationship between data analysis, visual design, and misleading communication</strong>.</p>
+        <p>The time-window exploration was particularly important. By computationally examining every possible interval, we showed how a technically accurate selection of data can produce a substantially different narrative from the full dataset. This let us document, with evidence, why our black hat window is a cherry-picked one.</p>
+        <p>We also used AI in an iterative process of proposing, evaluating, rejecting, and refining design ideas. Its contributions were not limited to implementation: it helped us identify inconsistencies, compare alternatives, test numerical claims, and critique usability.</p>
+        <p>At the same time, our team made the final decisions. We rejected features that reduced clarity, corrected inaccurate descriptions, and verified calculations before incorporating them.</p>
+
+        <h4>6. What we learned</h4>
+        <p>This project showed us that AI can be valuable as a computational and critical-thinking aid, but its recommendations are not inherently reliable.</p>
+        <p>We learned that effective AI use requires more than writing prompts and accepting generated solutions. It requires asking targeted questions, examining the resulting evidence, testing implementations, recognizing limitations, and making independent decisions.</p>
+        <p>Our most valuable results came from combining <strong>AI-assisted exploration with human evaluation</strong>. This helped us develop more deliberate visualizations while gaining a deeper understanding of how data selection and presentation can shape the conclusions readers draw.</p>
+      </article>
       <article class="card" id="appendix-extra">
         <h3>Extra credit features</h3>
         <p>The assignment requires two visualizations and a write-up for each. These three features go beyond that. Each answers a question a reader of our charts would naturally ask, and each is built from the same data and code as the main charts.</p>
@@ -145,20 +243,9 @@
           <dd>Accessibility is not part of the rubric. The limit is that the heatmap is not keyboard-navigable, so it has a text summary and a list of its five most flattering windows instead.</dd>
         </dl>
       </article>
-      <article class="card" id="appendix-data">
-        <h3>Data and references</h3>
-      </article>
-      <article class="card" id="appendix-process">
-        <h3>Development process</h3>
-      </article>
-      <article class="card" id="appendix-ai">
-        <h3>AI usage</h3>
-      </article>
     </section>
-  </main>
-
-  <footer class="wrap site-footer">
-    <p>Built with vanilla JavaScript and D3 v7.</p>
-  </footer>
+      </main>
+    </div>
+  </div>
 </body>
 </html>
