@@ -36,10 +36,16 @@
   <main class="wrap">
     <section id="white-hat" aria-labelledby="white-hat-title">
       <h2 id="white-hat-title">White Hat</h2>
-      <article class="card" data-view="changeByCountry">
+      <article class="card" id="ec-accessibility" data-view="changeByCountry">
         <h3>Change by country</h3>
         <div class="chart" data-chart></div>
+        <p class="ec-note"><span class="ec-badge">Extra credit</span><strong>Accessibility:</strong> Tab to the chart, then use the arrow keys to move between countries; each row shows a focus ring and tooltip with its values and has a text label for screen readers. Color is never the only cue, since direction also comes from the zero line and printed values. The palette is colorblind-safe, and transitions stop when your system requests reduced motion.</p>
         <p class="caption" data-caption></p>
+      </article>
+
+      <article class="card" data-view="coverage">
+        <h3>Which countries report which years?</h3>
+        <div class="chart" data-chart></div>
       </article>
     </section>
 
@@ -57,7 +63,7 @@
         <h3>White hat write-up</h3>
         <p><strong>Change by country: marks and encodings.</strong> A sorted horizontal bar chart is used because the task is comparing one signed value across many named countries. Bar length from a zero baseline is the most accurate position-based encoding, and horizontal bars leave room for readable country names. A line chart would need dozens of overlapping lines and a map would encode value as color, which is harder to read. Blue means a decrease and red-orange means an increase, a colorblind-safe pair. Color is redundant with direction from the zero line and with the printed value labels, so the chart does not depend on color alone. The axes start at zero and are never truncated.</p>
         <p><strong>A toggle between % change and absolute change.</strong> Percent change alone exaggerates countries with small starting emissions, while absolute change alone hides fast-moving small countries. A toggle switches one chart between the two measures, so each view stays uncluttered and has a single axis, while the caption tells the reader when to switch. Countries re-sort by whichever measure is shown. Hovering a row shows the country's start and end values, both changes and its share of the cohort's net change.</p>
-        <p><strong>Data transformation.</strong> From the raw yearly totals we calculate percent change and absolute change between the start and end year, sum a cohort total, and calculate each country's share of the net change. The cohort is limited to countries that report every year in the period, so each bar covers the same span; the countries left out are counted in the caption. Regional aggregates are removed so nothing is counted twice. The reader can re-sort by value or name.</p>
+        <p><strong>Data transformation.</strong> From the raw yearly totals we calculate percent change and absolute change between the start and end year, sum a cohort total, and calculate each country's share of the net change. The cohort is limited to countries that report every year in the period, so each bar covers the same span; the countries left out are counted in the caption. Regional aggregates are removed so nothing is counted twice. A coverage grid under the chart shows which countries report which years, so the reader can see who is in the cohort, who is left out and why. The reader can also re-sort by value or name.</p>
         <p><strong>Titles and labels.</strong> The title is a neutral question that states the period rather than a conclusion. The subtitle gives the number of countries, the measure (national totals excluding land use) and how many fell or rose. Both axes carry units, the caption explains the colors, the percent-versus-absolute caveat and the exclusions, and the source is cited. This is the honest counterpart of the black hat chart: the same data, with the full period, a zero baseline and a neutral title.</p>
       </article>
       <article class="card" id="writeup-black-hat">
@@ -78,19 +84,67 @@
           <strong>Why it looks trustworthy.</strong> We kept the cues readers use to judge reliability: a full source line, a stated country count, labeled axes with units, light gridlines, hover values, a precise one-decimal figure and clean styling. No distortion is announced, and each is common in real reporting, so nothing looks like an error.
         </p>
         <p>
-          <strong>The honest version.</strong> “Review the distortions” switches the same chart to 1990–2022, a zero baseline, a blue line and a neutral title. The same data goes from a 13.6% drop to a 2.4% change.
+          <strong>The honest version.</strong> “Review the distortions” has one switch per trick: the full 1990–2022 period, a zero baseline, and a neutral title and blue line. A live readout shows what each fix does, so the reader can see that the time window alone turns a 13.6% drop into a 2.4% change, while the axis changes how large the same drop looks. A heatmap of every possible start and end year shows that 2007–2020 is the single most flattering window of all 528, and that more than half of the windows show emissions rising.
         </p>      </article>
     </section>
 
     <section id="reveal" aria-labelledby="reveal-title">
       <h2 id="reveal-title">Review the distortions</h2>
-      <article class="card" data-view="reveal">
+      <article class="card" id="ec-switches" data-view="reveal">
+        <h3>Fix the distortions one at a time <span class="ec-badge">Extra credit</span></h3>
+        <p class="ec-note"><strong>Extra credit feature:</strong> instead of a single reveal button, three independent switches undo the time window, the axis and the title one at a time, and a live readout shows what each fix changes.</p>
+        <div class="chart" data-chart></div>
+      </article>
+
+      <article class="card" id="ec-heatmap" data-view="cherry">
+        <h3>How many ways could you pick the window? <span class="ec-badge">Extra credit</span></h3>
+        <p class="ec-note"><strong>Extra credit feature:</strong> this heatmap shows every possible start and end year at once and marks the window the black hat chart used, so the cherry-picking is visible in the data, not just described.</p>
         <div class="chart" data-chart></div>
       </article>
     </section>
 
     <section id="appendix" aria-labelledby="appendix-title">
       <h2 id="appendix-title">Appendix</h2>
+      <article class="card" id="appendix-extra">
+        <h3>Extra credit features</h3>
+        <p>The assignment requires two visualizations and a write-up for each. These three features go beyond that. Each answers a question a reader of our charts would naturally ask, and each is built from the same data and code as the main charts.</p>
+
+        <h4><a href="#ec-switches">1. Per-trick reveal switches with a live readout</a></h4>
+        <dl>
+          <dt>What it does</dt>
+          <dd>Three independent switches (time window, vertical axis, title and color) undo one distortion at a time. A readout shows the percent change on screen, how much of the chart height the drop fills, and the tone of the framing.</dd>
+          <dt>Why it is innovative or advanced</dt>
+          <dd>A reveal is usually one before-and-after button. Here the distortions are separate variables, so the reader can run a small controlled experiment, and the readout turns each effect into a number (percent change, share of chart height) instead of only a visual impression.</dd>
+          <dt>Why it matters for our visualization</dt>
+          <dd>Our black hat chart combines three tricks, and a single before-and-after cannot show which one does the work. The switches separate them: the time window alone moves the headline figure from −13.6% to −2.4%, the axis changes only how large the same drop looks, and the title and color change only the tone. This is the argument of our black hat write-up, made testable.</dd>
+          <dt>How it goes beyond the requirements</dt>
+          <dd>The write-up explains the techniques. The switches let the reader check each claim by changing one variable and watching the numbers, including mixed settings.</dd>
+        </dl>
+
+        <h4><a href="#ec-heatmap">2. Cherry-picking heatmap</a></h4>
+        <dl>
+          <dt>What it does</dt>
+          <dd>A grid of every possible start year and end year (528 windows) is colored by the change in total emissions for our 61 countries, with the black hat chart's window outlined.</dd>
+          <dt>Why it is innovative or advanced</dt>
+          <dd>Instead of showing one alternative window, it draws the whole space of possible windows at once, so the reader sees where the chosen window sits among all the headlines the data could support. It needs a new calculation for every start and end year pair, rendered as a diverging color scale centered on zero.</dd>
+          <dt>Why it matters for our visualization</dt>
+          <dd>A black hat chart that selects a time window only works if that window is unrepresentative. The heatmap tests that directly: 2007–2020 is the most flattering of all 528 windows, and more than half of them (293) show emissions rising. So the selective filtering is shown to be cherry-picking, not just asserted, and it answers the fair question of whether another window would have told the same story.</dd>
+          <dt>How it goes beyond the requirements</dt>
+          <dd>It computes a new dataset (the change for every possible window) that none of the main charts need. It sits in the review section, so it does not tip off readers of the black hat chart.</dd>
+        </dl>
+
+        <h4><a href="#ec-accessibility">3. Accessibility and keyboard navigation</a></h4>
+        <dl>
+          <dt>What it does</dt>
+          <dd>The main chart works without a mouse. Tab to the chart, then use the arrow keys (plus Home and End) to move between countries. Each row shows a focus ring and a tooltip with its values and has a text label for screen readers. Direction is never shown by color alone: it also comes from the zero line and printed values. The palette is colorblind-safe, and transitions stop when the system requests reduced motion.</dd>
+          <dt>Why it is innovative or advanced</dt>
+          <dd>Static SVG charts are usually mouse-only. This one uses a single tab stop with arrow-key movement between rows (a roving focus model), labels every row for screen readers, shows the tooltip on keyboard focus, and respects the reduced-motion setting.</dd>
+          <dt>Why it matters for our visualization</dt>
+          <dd>The assignment defines a white hat chart as clear and easy to interpret for its intended audience, often the general population. A chart that needs a mouse or full color vision is not clear to part of that audience, and a visualization about honest communication should not exclude readers.</dd>
+          <dt>How it goes beyond the requirements, and its limit</dt>
+          <dd>Accessibility is not part of the rubric. The limit is that the heatmap is not keyboard-navigable, so it has a text summary and a list of its five most flattering windows instead.</dd>
+        </dl>
+      </article>
       <article class="card" id="appendix-data">
         <h3>Data and references</h3>
       </article>
