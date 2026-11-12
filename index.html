@@ -24,8 +24,8 @@
       <ul>
         <li><a href="#white-hat">White Hat</a></li>
         <li><a href="#black-hat">Black Hat</a></li>
-        <li><a href="#reveal">Review the distortions</a></li>
         <li><a href="#writeups">Write-ups</a></li>
+        <li><a href="#reveal">Review the distortions</a></li>
         <li><a href="#appendix">Appendix</a></li>
       </ul>
     </div>
@@ -41,21 +41,6 @@
         <div class="chart" data-chart></div>
         <p class="caption" data-caption></p>
       </article>
-      <article class="card" data-view="ukraine">
-        <h3>Total with and without Ukraine</h3>
-        <div class="chart" data-chart></div>
-        <p class="caption" data-caption></p>
-      </article>
-      <article class="card" data-view="transparency">
-        <h3>Data transparency</h3>
-        <div class="chart" data-chart></div>
-        <p class="caption" data-caption></p>
-      </article>
-      <article class="card" data-view="nordic">
-        <h3>Nordic countries with and without land use</h3>
-        <div class="chart" data-chart></div>
-        <p class="caption" data-caption></p>
-      </article>
     </section>
 
     <section id="black-hat" aria-labelledby="black-hat-title">
@@ -64,39 +49,43 @@
         <div class="chart" data-chart></div>
         <p class="caption" data-caption></p>
       </article>
-      <article class="card" data-view="blackHat2">
-        <div class="chart" data-chart></div>
-        <p class="caption" data-caption></p>
-      </article>
-      <article class="card" data-view="blackHat3">
-        <div class="chart" data-chart></div>
-        <p class="caption" data-caption></p>
-      </article>
-    </section>
-
-    <section id="reveal" aria-labelledby="reveal-title">
-      <h2 id="reveal-title">Review the distortions</h2>
-      <article class="card" data-view="reveal">
-        <div class="chart" data-chart></div>
-      </article>
     </section>
 
     <section id="writeups" aria-labelledby="writeups-title">
       <h2 id="writeups-title">Write-ups</h2>
       <article class="card" id="writeup-white-hat">
         <h3>White hat write-up</h3>
+        <p><strong>Change by country: marks and encodings.</strong> A sorted horizontal bar chart is used because the task is comparing one signed value across many named countries. Bar length from a zero baseline is the most accurate position-based encoding, and horizontal bars leave room for readable country names. A line chart would need dozens of overlapping lines and a map would encode value as color, which is harder to read. Blue means a decrease and red-orange means an increase, a colorblind-safe pair. Color is redundant with direction from the zero line and with the printed value labels, so the chart does not depend on color alone. The axes start at zero and are never truncated.</p>
+        <p><strong>A toggle between % change and absolute change.</strong> Percent change alone exaggerates countries with small starting emissions, while absolute change alone hides fast-moving small countries. A toggle switches one chart between the two measures, so each view stays uncluttered and has a single axis, while the caption tells the reader when to switch. Countries re-sort by whichever measure is shown. Hovering a row shows the country's start and end values, both changes and its share of the cohort's net change.</p>
+        <p><strong>Data transformation.</strong> From the raw yearly totals we calculate percent change and absolute change between the start and end year, sum a cohort total, and calculate each country's share of the net change. The cohort is limited to countries that report every year in the period, so each bar covers the same span; the countries left out are counted in the caption. Regional aggregates are removed so nothing is counted twice. The reader can re-sort by value or name.</p>
+        <p><strong>Titles and labels.</strong> The title is a neutral question that states the period rather than a conclusion. The subtitle gives the number of countries, the measure (national totals excluding land use) and how many fell or rose. Both axes carry units, the caption explains the colors, the percent-versus-absolute caveat and the exclusions, and the source is cited. This is the honest counterpart of the black hat chart: the same data, with the full period, a zero baseline and a neutral title.</p>
       </article>
       <article class="card" id="writeup-black-hat">
         <h3>Black hat write-up</h3>
         <p>
-          <strong>1. Selective filtering.</strong> We show only data from 2007 to 2020, leaving out earlier and later years. This narrow time window emphasizes the decline from the 2007 peak to the 2020 low, while hiding the broader context: emissions fell by only around 2.4% over the full 1990–2022 period. Ending the chart in 2020 also highlights a year when COVID-19 restrictions temporarily reduced economic activity, transportation, and industrial operations. Without the later data, viewers cannot tell whether the decline continued.
+          <strong>Goal.</strong> The black hat chart says “emissions have fallen 13.6% since 2007”, using the same 61-country dataset as the honest charts. Every number is true; the distortion comes from one choice in each of the three areas: data transformation, marks and encodings, and titles and labels.
         </p>
         <p>
-          <strong>2. Truncated y-axis.</strong> We narrow the vertical axis range, which makes the 2007–2020 drop look more dramatic than it would on a scale starting at zero. This visual emphasis can lead viewers to overestimate the size of the change.
+          <strong>1. Selective filtering (data transformation).</strong> We show only 2007 to 2020. 2007 is the highest point in the record and 2020 is the COVID-19 lockdown low, so these years give the largest possible drop. Over the full 1990–2022 period emissions fell only about 2.4%, and by 2022 the drop from 2007 had shrunk to about 10.8% as emissions partly rebounded. Ending in 2020 also hides that the low came from a temporary shutdown, not lasting policy. The country set is identical in both versions, so only the time window changes.
         </p>
         <p>
-          <strong>3. Misleading title.</strong> By omitting the chart's date range and presenting the decline as a current trend, the title may lead viewers to assume emissions are still falling at the same rate. The data stop at 2020, so they do not support that conclusion.
+          <strong>2. Truncated y-axis (marks and encodings).</strong> The vertical axis does not start at zero, so a drop of under 14% fills most of the chart height and looks like a collapse. Line charts do not require a zero baseline, so this draws little suspicion. The axis labels stay accurate, so a careful reader can catch it. Direct labels on the 2007 value and the final change pull the eye to the endpoints and away from the scale.
         </p>
+        <p>
+          <strong>3. Misleading title and color (titles and labels).</strong> “Emissions Have Fallen 13.6% Since 2007” is accurate, but with no end year it reads as a statement about today. The subtitle gives the country count and units but omits the end year, so 2020 appears only as the last x-axis tick. The green line signals good news, and a bold green “−13.6% since 2007” label frames the result before the reader checks the data.
+        </p>
+        <p>
+          <strong>Why it looks trustworthy.</strong> We kept the cues readers use to judge reliability: a full source line, a stated country count, labeled axes with units, light gridlines, hover values, a precise one-decimal figure and clean styling. No distortion is announced, and each is common in real reporting, so nothing looks like an error.
+        </p>
+        <p>
+          <strong>The honest version.</strong> “Review the distortions” switches the same chart to 1990–2022, a zero baseline, a blue line and a neutral title. The same data goes from a 13.6% drop to a 2.4% change.
+        </p>      </article>
+    </section>
+
+    <section id="reveal" aria-labelledby="reveal-title">
+      <h2 id="reveal-title">Review the distortions</h2>
+      <article class="card" data-view="reveal">
+        <div class="chart" data-chart></div>
       </article>
     </section>
 

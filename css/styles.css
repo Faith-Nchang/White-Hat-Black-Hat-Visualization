@@ -205,6 +205,94 @@ section > h2 {
 }
 .toggle-group button[aria-pressed="true"]::before { content: "\2713\00a0"; }
 
+/* Change by country: header, summary chips and control toolbar. */
+.card[data-view="changeByCountry"] h3 {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.card[data-view="changeByCountry"] .emissions-headline {
+  margin: var(--sp-1) 0 var(--sp-3);
+  max-width: 34ch;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.wh-stats { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: 0; list-style: none; }
+.wh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f4f6f5;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+.wh-swatch { width: 0.7rem; height: 0.7rem; border-radius: 3px; flex: none; }
+
+.wh-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  background: #f4f6f5;
+}
+.wh-control { display: flex; flex-direction: column; gap: 0.35rem; }
+.wh-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #e3e7e5;
+}
+.segmented button {
+  font: inherit;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s, color 0.12s, box-shadow 0.12s;
+}
+.segmented button:hover { color: var(--text); background: rgba(255, 255, 255, 0.6); }
+.segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.wh-control-primary .segmented button { padding: 0.6rem 1.25rem; font-size: var(--fs-base); }
+.wh-control-primary .segmented button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 114, 178, 0.45);
+}
+.wh-control-secondary .segmented button { padding: 0.45rem 1rem; font-size: var(--fs-sm); }
+@media (max-width: 600px) {
+  .wh-toolbar { align-items: stretch; }
+  .wh-control, .segmented { width: 100%; }
+  .segmented button { flex: 1; }
+}
+
 .tooltip {
   position: fixed;
   z-index: 200;

@@ -172,6 +172,7 @@ function exclRows(state) {
 
 // Keep one fixed cohort across both windows so the reveal changes framing only.
 let showEmissionsContext = false;
+let lineTooltip = null;
 
 function emissionsTotalSeries() {
   const countries = dataStore.completeCountries("excl", 1990, 2022);
@@ -198,9 +199,11 @@ function renderEmissionsLine(container, options) {
   const color = options.neutralHeadline ? palette.blue : palette.green;
   root.append("h4").attr("class", "emissions-headline").text(options.neutralHeadline
     ? `Total greenhouse gas emissions, ${first.year}–${last.year}`
-    : `Emissions Down ${drop.toFixed(1)}% Since 2007`);
-  root.append("p").attr("class", "emissions-subtitle").text(
-    `${countries.length} countries with complete data · ${first.year}–${last.year} · Excluding land use`);
+    : `Emissions Have Fallen ${drop.toFixed(1)}% Since 2007`);
+  // The distorted version leaves the end year out of the subtitle; it appears only on the x-axis.
+  root.append("p").attr("class", "emissions-subtitle").text(options.neutralHeadline
+    ? `${countries.length} countries with complete data · ${first.year}–${last.year} · Excluding land use`
+    : `${countries.length} countries with complete data · National totals · Excluding land use`);
 
   const margin = { top: 35, right: 35, bottom: 60, left: 90 };
   const width = 900 - margin.left - margin.right;
@@ -255,8 +258,24 @@ function renderEmissionsLine(container, options) {
       .attr("d", d3.line().x(d => xScale(d.year)).y(d => yScale(d.mt)));
     svg.selectAll(".emissions-point").data(plotted, d => d.year).join("circle")
       .attr("class", "emissions-point").attr("cx", d => xScale(d.year))
-      .attr("cy", d => yScale(d.mt)).attr("r", 4).attr("fill", color)
-      .append("title").text(d => `${d.year}: ${formatMt(d.mt)}`);
+      .attr("cy", d => yScale(d.mt)).attr("r", 5).attr("fill", color)
+      .attr("stroke", "#fff").attr("stroke-width", 1.5)
+      .on("mousemove", (event, d) => {
+        lineTooltip = lineTooltip || createTooltip();
+        lineTooltip.show(
+          `<strong>${d.year}</strong><br>${formatMt(d.mt)}<br>vs ${first.year}: ${formatPct(d.mt / first.mt - 1)}`,
+          event.clientX, event.clientY);
+      })
+      .on("mouseleave", () => lineTooltip && lineTooltip.hide());
+    if (!options.neutralHeadline) {
+      // Direct labels draw the eye to the two endpoints that make the decline look largest.
+      svg.append("text").attr("x", xScale(first.year) + 10).attr("y", yScale(first.mt) - 12)
+        .attr("font-size", 13).attr("font-weight", 600).attr("fill", "#1c1c1c")
+        .text(`${first.year}: ${formatMt(first.mt)}`);
+      svg.append("text").attr("x", xScale(last.year) - 10).attr("y", yScale(last.mt) - 14)
+        .attr("text-anchor", "end").attr("font-size", 15).attr("font-weight", 700).attr("fill", "#006e51")
+        .text(`${formatPct(last.mt / first.mt - 1)} since ${first.year}`);
+    }
   }
 
   updateAxes();
@@ -304,72 +323,185 @@ function setupEmissionsToggle(container) {
   updateComparison();
 }
 
-let activeRevealTab = 0;
+// ---- White hat 1: change by country --------------------------------------
+let changeSort = "value";
+let changeMeasure = "pct";
+let changeTooltip = null;
 
-function setupRevealTabs(container) {
+// Per-country % change, absolute change and share of the cohort's net change.
+function changeByCountryData(startYear, endYear) {
+  const cohort = dataStore.completeCountries("excl", startYear, endYear);
+  const rows = cohort.map(({ code, country }) => {
+    const s = dataStore.series(code, "excl");
+    const a = s.find(d => d.year === startYear).mt;
+    const b = s.find(d => d.year === endYear).mt;
+    return { code, country, start: a, end: b, abs: b - a, pct: b / a - 1 };
+  });
+  const startTotal = d3.sum(rows, d => d.start);
+  const endTotal = d3.sum(rows, d => d.end);
+  const netAbs = endTotal - startTotal;
+  rows.forEach(d => { d.share = netAbs === 0 ? null : d.abs / netAbs; });
+  const included = new Set(rows.map(d => d.code));
+  const excluded = new Map();
+  for (const d of dataStore.countryRows()) {
+    if (d.measure === "excl" && !included.has(d.code)) excluded.set(d.code, d.country);
+  }
+  return {
+    rows,
+    total: { country: `All ${rows.length} countries`, start: startTotal, end: endTotal, abs: netAbs, pct: endTotal / startTotal - 1, isTotal: true },
+    excluded: [...excluded.values()].sort((a, b) => a.localeCompare(b))
+  };
+}
+
+function renderChangeByCountry(container, state) {
   const root = d3.select(container);
   root.selectAll("*").remove();
-  const tabs = root.append("div").attr("class", "reveal-tabs")
-    .attr("role", "tablist").attr("aria-label", "Black Hat distortion reviews")
-    .selectAll("button").data([1, 2, 3]).join("button")
-    .attr("type", "button").attr("role", "tab")
-    .attr("id", d => `reveal-tab-${d}`)
-    .attr("aria-controls", d => `reveal-panel-${d}`)
-    .text(d => `Black Hat ${d}`);
-  const panels = root.selectAll(".reveal-panel").data([1, 2, 3]).join("div")
-    .attr("class", "reveal-panel").attr("role", "tabpanel")
-    .attr("id", d => `reveal-panel-${d}`)
-    .attr("aria-labelledby", d => `reveal-tab-${d}`).attr("tabindex", 0);
+  const [startYear, endYear] = state.yearRange;
+  const { rows, total, excluded } = changeByCountryData(startYear, endYear);
+  if (!rows.length) return noData(container, `No countries have complete ${startYear}–${endYear} data.`);
 
-  setupEmissionsToggle(panels.nodes()[0]);
-  panels.filter(d => d !== 1).append("p").attr("class", "caption")
-    .text(d => `The review for Black Hat ${d} will appear here when its chart is implemented.`);
+  const measures = {
+    pct: {
+      label: "% change",
+      title: `% change in emissions, ${startYear} → ${endYear}`,
+      fmt: d3.format("+.1%"), tick: d3.format("+.0%"), word: "%"
+    },
+    abs: {
+      label: "Absolute change (Mt)",
+      title: `Change in emissions (Mt CO₂e), ${startYear} → ${endYear}`,
+      fmt: v => `${v > 0 ? "+" : ""}${d3.format(",.0f")(v)}`, tick: d3.format("+,.0f"), word: "Mt"
+    }
+  };
+  const key = changeMeasure;
+  const M = measures[key];
 
-  function selectTab(index, focus = false) {
-    activeRevealTab = index;
-    tabs.attr("aria-selected", (d, i) => String(i === index))
-      .attr("tabindex", (d, i) => i === index ? 0 : -1);
-    panels.property("hidden", (d, i) => i !== index);
-    if (focus) tabs.nodes()[index].focus();
+  // Sort by the measure on screen (largest cut first), or alphabetically.
+  rows.sort(changeSort === "alpha"
+    ? (a, b) => a.country.localeCompare(b.country)
+    : (a, b) => a[key] - b[key]);
+
+  const nDown = rows.filter(d => d.pct < 0).length;
+  root.append("h4").attr("class", "emissions-headline")
+    .text(`How much did each country's greenhouse gas emissions change, ${startYear}–${endYear}?`);
+  // Summary chips double as the color legend (blue = fell, red-orange = rose).
+  const stats = root.append("ul").attr("class", "wh-stats").attr("aria-label", "Summary");
+  const chips = [
+    { text: `${rows.length} countries with complete data` },
+    { text: `${nDown} fell`, color: palette.blue },
+    { text: `${rows.length - nDown} rose or stayed flat`, color: palette.vermillion },
+    { text: "Totals exclude land use" }
+  ];
+  const chip = stats.selectAll("li").data(chips).join("li").attr("class", "wh-chip");
+  chip.filter(d => d.color).append("span").attr("class", "wh-swatch")
+    .attr("aria-hidden", "true").style("background", d => d.color);
+  chip.append("span").text(d => d.text);
+
+  const rerender = () => renderChangeByCountry(container, state);
+  const toolbar = root.append("div").attr("class", "wh-toolbar");
+  const control = (label, items, current, onPick, level, visibleLabel) => {
+    const wrap = toolbar.append("div").attr("class", `wh-control wh-control-${level}`);
+    wrap.append("span").attr("class", "wh-label").attr("aria-hidden", "true").text(visibleLabel);
+    const group = wrap.append("div").attr("class", "segmented")
+      .attr("role", "group").attr("aria-label", label);
+    group.selectAll("button").data(items).join("button")
+      .attr("type", "button").text(d => d.label)
+      .attr("aria-pressed", d => String(d.k === current))
+      .on("click", (event, d) => { onPick(d.k); rerender(); });
+  };
+  control("Measure shown",
+    [{ k: "pct", label: "% change" }, { k: "abs", label: "Absolute change (Mt)" }],
+    changeMeasure, k => { changeMeasure = k; }, "primary", "Show");
+  control("Sort countries by",
+    [{ k: "value", label: "By value" }, { k: "alpha", label: "A–Z" }],
+    changeSort, k => { changeSort = k; }, "secondary", "Sort");
+
+  const W = 1000, rowH = 20, sep = 14;
+  const m = { top: 52, bottom: 48, left: 185 };
+  const panelW = 560;
+  const H = m.top + rowH * (rows.length + 1) + sep + m.bottom;
+  const innerH = H - m.top - m.bottom;
+
+  const all = [total, ...rows];
+  const y = d => (d.isTotal ? 0 : rowH + sep + rows.indexOf(d) * rowH);
+  const [lo, hi] = d3.extent(all, d => d[key]);
+  const pad = (Math.max(hi, 0) - Math.min(lo, 0)) * 0.12;
+  const x = d3.scaleLinear().domain([Math.min(lo, 0) - pad, Math.max(hi, 0) + pad]).nice().range([0, panelW]);
+
+  const svg = root.append("svg").attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("role", "img")
+    .attr("aria-label", `Bar chart of the ${key === "pct" ? "percent" : "absolute"} change in greenhouse gas emissions for ${rows.length} countries from ${startYear} to ${endYear}. The cohort total changed ${formatPct(total.pct)} (${formatMt(total.abs)}).`);
+  svg.append("title").text(`Change in emissions by country, ${startYear}–${endYear}`);
+  svg.append("text").attr("x", m.left).attr("y", 20).attr("font-weight", 600).attr("font-size", 13).text(M.title);
+  const g = svg.append("g").attr("transform", `translate(0,${m.top})`);
+  const pg = g.append("g").attr("transform", `translate(${m.left},0)`);
+
+  pg.append("g").attr("class", "emissions-grid")
+    .call(d3.axisBottom(x).ticks(7).tickSize(innerH).tickFormat(""))
+    .call(a => a.select(".domain").remove());
+  pg.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
+    .call(d3.axisBottom(x).ticks(7).tickFormat(M.tick));
+
+  pg.selectAll(".bar").data(all).join("rect").attr("class", "bar")
+    .attr("x", d => x(Math.min(0, d[key])))
+    .attr("width", d => Math.abs(x(d[key]) - x(0)))
+    .attr("y", d => y(d) + 3).attr("height", rowH - 6)
+    .attr("fill", d => (d[key] < 0 ? palette.blue : palette.vermillion))
+    .attr("stroke", d => (d.isTotal ? "#000" : "none")).attr("stroke-width", 1.5);
+  pg.selectAll(".val").data(all).join("text").attr("class", "val")
+    .attr("x", d => x(d[key]) + (d[key] < 0 ? -4 : 4))
+    .attr("y", d => y(d) + rowH / 2 + 4)
+    .attr("text-anchor", d => (d[key] < 0 ? "end" : "start"))
+    .attr("font-size", 11.5).attr("font-weight", d => (d.isTotal ? 700 : 400))
+    .text(d => M.fmt(d[key]));
+  pg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", innerH)
+    .attr("stroke", "#1c1c1c").attr("stroke-width", 1.25);
+  pg.append("line").attr("x1", 0).attr("x2", panelW).attr("y1", rowH + sep / 2).attr("y2", rowH + sep / 2)
+    .attr("stroke", "#999").attr("stroke-dasharray", "3 3");
+
+  g.selectAll(".row-label").data(all).join("text").attr("class", "row-label")
+    .attr("x", m.left - 8).attr("y", d => y(d) + rowH / 2 + 4).attr("text-anchor", "end")
+    .attr("font-size", 12.5).attr("font-weight", d => (d.isTotal ? 700 : 400)).text(d => d.country);
+
+  // Callouts for the largest cut and largest rise of the measure on screen.
+  const minRow = rows.reduce((b, d) => (d[key] < b[key] ? d : b), rows[0]);
+  const maxRow = rows.reduce((b, d) => (d[key] > b[key] ? d : b), rows[0]);
+  const noteRows = [];
+  if (minRow[key] < 0) noteRows.push({ d: minRow, text: "Largest cut", color: "#005a8c" });
+  if (maxRow[key] > 0) noteRows.push({ d: maxRow, text: "Largest rise", color: "#a84800" });
+  g.selectAll(".callout").data(noteRows).join("text").attr("class", "callout")
+    .attr("x", m.left + panelW + 20).attr("y", n => y(n.d) + rowH / 2 + 4)
+    .attr("font-size", 11.5).attr("font-weight", 700).attr("fill", n => n.color)
+    .text(n => `◄ ${n.text}`);
+
+  changeTooltip = changeTooltip || createTooltip();
+  g.selectAll(".hit").data(all).join("rect").attr("class", "hit")
+    .attr("x", 0).attr("width", W).attr("y", d => y(d)).attr("height", rowH)
+    .attr("fill", "transparent")
+    .on("mousemove", (event, d) => changeTooltip.show(
+      `<strong>${d.country}</strong><br>${startYear}: ${formatMt(d.start)}<br>${endYear}: ${formatMt(d.end)}<br>` +
+      `Change: ${formatMt(d.abs)} (${formatPct(d.pct)})` +
+      (d.share != null && !d.isTotal ? `<br>Share of cohort net change: ${d3.format(".1%")(d.share)}` : ""),
+      event.clientX, event.clientY))
+    .on("mouseleave", () => changeTooltip.hide());
+
+  root.append("p").attr("class", "caption").text(key === "pct"
+    ? `Percent change is relative to each country's own ${startYear} level, so a country with small emissions can show a very large percentage. Switch to absolute change to see how many tonnes that is. The bold top row sums all ${rows.length} countries.`
+    : `Absolute change is in million tonnes CO₂ equivalent, so large emitters dominate. Switch to % change to compare countries relative to their own ${startYear} level. The bold top row sums all ${rows.length} countries.`);
+  root.append("p").attr("class", "caption").text(
+    `Included: countries reporting every year ${startYear}–${endYear} (${excluded.length} other reporting countries have gaps and are left out so each bar spans the same years; names listed below). Totals exclude land use, land-use change and forestry. Hover a row for start and end values and its share of the net change. Source: OECD Air Emissions GHG Inventories (DF_AIR_GHG), data/emissions.csv.`);
+  if (excluded.length) {
+    const details = root.append("details").attr("class", "caption");
+    details.append("summary").text(`Show the ${excluded.length} countries left out`);
+    details.append("p").text(excluded.join(", "));
   }
-  tabs.on("click", (event, d) => selectTab(d - 1))
-    .on("keydown", (event, d) => {
-      let index = d - 1;
-      if (event.key === "ArrowRight") index = (index + 1) % 3;
-      else if (event.key === "ArrowLeft") index = (index + 2) % 3;
-      else if (event.key === "Home") index = 0;
-      else if (event.key === "End") index = 2;
-      else return;
-      event.preventDefault();
-      selectTab(index, true);
-    });
-  selectTab(activeRevealTab);
 }
+
 
 const views = {
   changeByCountry: {
     name: "Change by country",
     render(container, state) {
-      placeholder(container, this.name, exclRows(state).length);
-    }
-  },
-  ukraine: {
-    name: "Total with and without Ukraine",
-    render(container, state) {
-      placeholder(container, this.name, exclRows(state).length);
-    }
-  },
-  transparency: {
-    name: "Data transparency",
-    render(container) {
-      placeholder(container, this.name, dataStore.allRows().length);
-    }
-  },
-  nordic: {
-    name: "Nordic with and without land use",
-    render(container, state) {
-      const rows = dataStore.countryRows().filter(d => NORDIC.includes(d.code)).filter(inRange(state));
-      placeholder(container, this.name, rows.length);
+      renderChangeByCountry(container, state);
     }
   },
   blackHat1: {
@@ -378,22 +510,10 @@ const views = {
       renderEmissionsLine(container, { fullPeriod: false, zeroBaseline: false, neutralHeadline: false });
     }
   },
-  blackHat2: {
-    name: "Black Hat view 2",
-    render(container, state) {
-      placeholder(container, this.name, exclRows(state).length);
-    }
-  },
-  blackHat3: {
-    name: "Black Hat view 3",
-    render(container, state) {
-      placeholder(container, this.name, exclRows(state).length);
-    }
-  },
   reveal: {
     name: "Review the distortions",
     render(container) {
-      setupRevealTabs(container);
+      setupEmissionsToggle(container);
     }
   }
 };
@@ -422,6 +542,7 @@ function setupNav() {
   }, { rootMargin: "-20% 0px -70% 0px" });
   targets.forEach(t => t && observer.observe(t));
 }
+
 
 async function init() {
   const status = document.getElementById("load-status");
