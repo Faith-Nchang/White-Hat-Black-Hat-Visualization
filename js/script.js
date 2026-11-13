@@ -118,17 +118,25 @@ function createTooltip() {
     .attr("aria-hidden", "true");
 
   return {
-    show(html, x, y) {
-      el.html(html).classed("visible", true);
+    show(html, x, y, extraClass) {
+      el.html(html).classed("visible", true).classed("tooltip-split", extraClass === "tooltip-split");
       this.move(x, y);
     },
     move(x, y) {
       const node = el.node();
       const w = node.offsetWidth;
       const h = node.offsetHeight;
-      const left = Math.min(x + 12, window.innerWidth - w - 8);
-      const top = y - h - 12 < 0 ? y + 16 : y - h - 12;
-      el.style("left", `${Math.max(8, left)}px`).style("top", `${top}px`);
+      const pad = 8;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let left = x + 14;
+      if (left + w > vw - pad) left = x - w - 14;
+      left = Math.max(pad, Math.min(left, vw - w - pad));
+      let top = y - h - 14;
+      if (top < pad) top = y + 18;
+      if (top + h > vh - pad) top = vh - h - pad;
+      if (top < pad) top = pad;
+      el.style("left", `${left}px`).style("top", `${top}px`);
     },
     hide() {
       el.classed("visible", false);
@@ -163,6 +171,41 @@ function emissionsTotalSeries() {
     series: d3.rollups(rows, values => d3.sum(values, d => d.mt), d => d.year)
       .map(([year, mt]) => ({ year, mt })).sort((a, b) => a.year - b.year)
   };
+}
+
+// Same 61-country cohort as the line. Each row is that country's change between the two endpoint years.
+function endpointSplit(startYear, endYear) {
+  const rows = dataStore.completeCountries("excl", 1990, 2022).map(({ code, country }) => {
+    const series = dataStore.series(code, "excl");
+    const start = series.find(d => d.year === startYear).mt;
+    const end = series.find(d => d.year === endYear).mt;
+    return { country, start, abs: end - start };
+  });
+  const fell = rows.filter(d => d.abs < 0).sort((a, b) => a.abs - b.abs);
+  const rose = rows.filter(d => d.abs >= 0).sort((a, b) => b.abs - a.abs);
+  const startTotal = d3.sum(rows, d => d.start);
+  const net = d3.sum(rows, d => d.abs);
+  return { fell, rose, net, pct: startTotal ? (startTotal + net) / startTotal - 1 : null };
+}
+
+function endpointSplitHtml(split, startYear, endYear) {
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const signed = v => `${v > 0 ? "+" : ""}${fmtMt(v)} Mt`;
+  const list = (items) => {
+    const shown = items.slice(0, 5).map(d =>
+      `<li><span>${esc(d.country)}</span><span>${signed(d.abs)}</span></li>`).join("");
+    const more = items.length > 5 ? `<li class="split-more">${items.length - 5} more</li>` : "";
+    return `<ul>${shown}${more}</ul>`;
+  };
+  const side = (cls, label, items) => {
+    const total = d3.sum(items, d => d.abs);
+    return `<div class="split-head ${cls}"><span>${label} · ${items.length} ${items.length === 1 ? "country" : "countries"}</span><span>${signed(total)}</span></div>` +
+      list(items);
+  };
+  return `<strong>${startYear} → ${endYear}</strong>` +
+    `<div class="split-net">Net ${signed(split.net)} (${formatPct(split.pct)})</div>` +
+    side("fell", "Fell", split.fell) +
+    side("rose", "Rose or stayed flat", split.rose);
 }
 
 function renderEmissionsLine(container, options) {
@@ -243,30 +286,49 @@ function renderEmissionsLine(container, options) {
     svg.append("path").datum(plotted).attr("fill", "none").attr("stroke", color)
       .attr("stroke-width", 3).attr("stroke-linejoin", "round")
       .attr("d", d3.line().x(d => xScale(d.year)).y(d => yScale(d.mt)));
+    // One split per point: always 2007 through the year under the cursor.
+    const splitByYear = new Map(plotted.map(d => {
+      if (d.year === 2007) {
+        return [d.year, `<strong>2007</strong><div class="split-net">Starting year · ${formatMt(d.mt)}</div><div>Hover a later year to see the change since 2007.</div>`];
+      }
+      const start = Math.min(2007, d.year);
+      const end = Math.max(2007, d.year);
+      return [d.year, endpointSplitHtml(endpointSplit(start, end), start, end)];
+    }));
+    const showSplit = (event, d) => {
+      lineTooltip = lineTooltip || createTooltip();
+      lineTooltip.show(splitByYear.get(d.year), event.clientX, event.clientY, "tooltip-split");
+    };
+    const hideTip = () => lineTooltip && lineTooltip.hide();
     svg.selectAll(".emissions-point").data(plotted, d => d.year).join("circle")
       .attr("class", "emissions-point").attr("cx", d => xScale(d.year))
       .attr("cy", d => yScale(d.mt)).attr("r", 5).attr("fill", color)
-      .style("stroke", "var(--surface)").attr("stroke-width", 1.5)
-      .on("mousemove", (event, d) => {
-        lineTooltip = lineTooltip || createTooltip();
-        lineTooltip.show(
-          `<strong>${d.year}</strong><br>${formatMt(d.mt)}<br>vs ${first.year}: ${formatPct(d.mt / first.mt - 1)}`,
-          event.clientX, event.clientY);
-      })
-      .on("mouseleave", () => lineTooltip && lineTooltip.hide());
+      .style("stroke", "var(--surface)").attr("stroke-width", 1.5);
     if (!options.neutralHeadline) {
       // Direct labels draw the eye to the two endpoints that make the decline look largest.
       svg.append("text").attr("x", xScale(first.year) + 10).attr("y", yScale(first.mt) - 12)
-        .attr("font-size", labelSize).attr("font-weight", 600)
+        .attr("font-size", labelSize).attr("font-weight", 600).attr("pointer-events", "none")
         .text(`${first.year}: ${formatMt(first.mt)}`);
       svg.append("text").attr("x", xScale(last.year) - 10).attr("y", yScale(last.mt) - 14)
-        .attr("text-anchor", "end").attr("font-size", narrow ? 12.5 : 15).attr("font-weight", 700).style("fill", "var(--good-ink)")
+        .attr("text-anchor", "end").attr("font-size", narrow ? 12.5 : 15).attr("font-weight", 700)
+        .style("fill", "var(--good-ink)").attr("pointer-events", "none")
         .text(`${formatPct(last.mt / first.mt - 1)} since ${first.year}`);
     }
+    // Larger invisible targets, drawn last so the endpoint labels do not cover them.
+    const gap = plotted.length > 1 ? width / (plotted.length - 1) : 28;
+    svg.selectAll(".endpoint-hit").data(plotted, d => d.year).join("circle")
+      .attr("class", "endpoint-hit")
+      .attr("cx", d => xScale(d.year)).attr("cy", d => yScale(d.mt))
+      .attr("r", Math.max(8, Math.min(16, gap * 0.45)))
+      .attr("fill", "transparent").style("cursor", "pointer")
+      .on("mousemove", showSplit)
+      .on("mouseleave", hideTip);
   }
 
   updateAxes();
   updateVis();
+  root.append("p").attr("class", "caption").text(
+    "Hover a point to see which countries fell and which rose from 2007 to that year. The two sides add up to the line.");
   root.append("p").attr("class", "caption").text(
     "Source: OECD Air Emissions GHG Inventories (DF_AIR_GHG), data/emissions.csv. Sum of national GHG totals; regional aggregates excluded.");
   if (options.neutralHeadline) {

@@ -62,7 +62,7 @@
 
     <section id="black-hat" aria-labelledby="black-hat-title">
       <h2 id="black-hat-title">Black Hat</h2>
-      <article class="card" data-view="blackHat1">
+      <article class="card" id="ec-split" data-view="blackHat1">
         <h3>Emissions over time</h3>
         <div class="chart" data-chart></div>
         <p class="caption" data-caption></p>
@@ -76,7 +76,7 @@
         <p><strong>Change by country: marks and encodings.</strong> A sorted horizontal bar chart is used because the task is comparing one signed value across many named countries. Bar length from a zero baseline is the most accurate position-based encoding, and horizontal bars leave room for readable country names. A line chart would need dozens of overlapping lines and a map would encode value as color, which is harder to read. Blue means a decrease and red-orange means an increase, a colorblind-safe pair. Color is redundant with direction from the zero line and with the printed value labels, so the chart does not depend on color alone. The axes start at zero and are never truncated.</p>
         <p><strong>A toggle between % change and absolute change.</strong> Percent change alone exaggerates countries with small starting emissions, while absolute change alone hides fast-moving small countries. A toggle switches one chart between the two measures, so each view stays uncluttered and has a single axis, while the caption tells the reader when to switch. Countries re-sort by whichever measure is shown. Hovering a row shows the country's start and end values, both changes and its share of the cohort's net change.</p>
         <p><strong>Data transformation.</strong> From the raw yearly totals we calculate percent change and absolute change between the start and end year, sum a cohort total, and calculate each country's share of the net change. The cohort is limited to countries that report every year in the period, so each bar covers the same span; the countries left out are counted in the caption. Regional aggregates are removed so nothing is counted twice. A coverage grid under the chart shows which countries report which years, so the reader can see who is in the cohort, who is left out and why. The reader can also re-sort by value or name.</p>
-        <p><strong>Titles and labels.</strong> The title is a neutral question that states the period rather than a conclusion. The subtitle gives the number of countries, the measure (national totals excluding land use) and how many fell or rose. Both axes carry units, the caption explains the colors, the percent-versus-absolute caveat and the exclusions, and the source is cited. This is the honest counterpart of the black hat chart: the same data, with the full period, a zero baseline and a neutral title.</p>
+        <p><strong>Titles and labels.</strong> The title is a neutral question that states the period rather than a conclusion. The subtitle gives the number of countries, the measure (national totals excluding land use) and how many fell or rose. Both axes carry units, the caption explains the colors, the percent-versus-absolute caveat and the exclusions, and the source is cited.</p>
       </article>
       <article class="card" id="writeup-black-hat">
         <h3>Black hat write-up</h3>
@@ -87,24 +87,19 @@
           <strong>1. Selective filtering (data transformation).</strong> We show only 2007 to 2020. 2007 is the highest point in the record and 2020 is the COVID-19 lockdown low, so these years give the largest possible drop. Over the full 1990–2022 period emissions fell only about 2.4%, and by 2022 the drop from 2007 had shrunk to about 10.8% as emissions partly rebounded. Ending in 2020 also hides that the low came from a temporary shutdown, not lasting policy. The country set is identical in both versions, so only the time window changes.
         </p>
         <p>
-          <strong>2. Truncated y-axis (marks and encodings).</strong> The vertical axis does not start at zero, so a drop of under 14% fills most of the chart height and looks like a collapse. Line charts do not require a zero baseline, so this draws little suspicion. The axis labels stay accurate, so a careful reader can catch it. Direct labels on the 2007 value and the final change pull the eye to the endpoints and away from the scale.
+          <strong>2. Truncated y-axis (marks and encodings).</strong> The vertical axis starts above zero, and we tightened both the minimum and the maximum around the data. Because of that, a drop of under 14% fills most of the chart height and looks like a collapse. Direct labels on the 2007 value and the final change pull the eye to the endpoints and away from the scale.
         </p>
         <p>
           <strong>3. Misleading title and color (titles and labels).</strong> “Emissions Have Fallen 13.6% Since 2007” is accurate, but with no end year it reads as a statement about today. The subtitle gives the country count and units but omits the end year, so 2020 appears only as the last x-axis tick. The green line signals good news, and a bold green “−13.6% since 2007” label frames the result before the reader checks the data.
         </p>
-        <p>
-          <strong>Why it looks trustworthy.</strong> We kept the cues readers use to judge reliability: a full source line, a stated country count, labeled axes with units, light gridlines, hover values, a precise one-decimal figure and clean styling. No distortion is announced, and each is common in real reporting, so nothing looks like an error.
-        </p>
-        <p>
-          <strong>The honest version.</strong> “Review the distortions” has one switch per trick: the full 1990–2022 period, a zero baseline, and a neutral title and blue line. A live readout shows what each fix does, so the reader can see that the time window alone turns a 13.6% drop into a 2.4% change, while the axis changes how large the same drop looks. A heatmap of every possible start and end year shows that 2007–2020 is the single most flattering window of all 528, and that more than half of the windows show emissions rising.
-        </p>      </article>
+      </article>
     </section>
 
     <section id="reveal" aria-labelledby="reveal-title">
       <h2 id="reveal-title">Review the distortions</h2>
       <article class="card" id="ec-switches" data-view="reveal">
         <h3>Fix the distortions one at a time <span class="ec-badge">Extra credit</span></h3>
-        <p class="ec-note"><strong>Extra credit feature:</strong> instead of a single reveal button, three independent switches undo the time window, the axis and the title one at a time, and a live readout shows what each fix changes.</p>
+        <p class="ec-note"><strong>Extra credit feature:</strong> three independent switches undo the time window, the axis and the title one at a time, and a live readout shows what each fix changes.</p>
         <div class="chart" data-chart></div>
       </article>
 
@@ -142,19 +137,32 @@
       </article>
       <article class="card" id="appendix-process">
         <h3>Development process</h3>
+
+        <h4>How we worked</h4>
+        <p>We began by choosing a dataset, which meant a first look at the options available for the assignment. Once we settled on the OECD Air Emissions GHG Inventories, both of us did preliminary research to identify the figures worth focusing on. After deciding to look at emissions across countries, we split the work and started building the application. Faith Nchang was responsible for the black hat visualization and its write-up, and Dillon Monkam was responsible for the white hat visualization and its write-up.</p>
+        <p>We worked on our pages separately. When both were finished, we compared them and merged them into one page, keeping the layout of whichever page had the stronger design. With a single page in place, we added the remaining sections, including the appendix and the AI review. From there we added any improvements we could think of to each visualization and added the extra-credit features.</p>
+
+        <h4>Time spent</h4>
+        <ul>
+          <li>Research: 4 hours</li>
+          <li>Application development: 22 hours (11 hours Faith, 11 hours Dillon)</li>
+        </ul>
+
+        <h4>Most time-consuming parts</h4>
+        <p>The parts that took the most time were the initial research and the black hat visualization. The Air Emissions dataset is large and supports many possible stories, so we used Tableau to sketch the data first and see which figures were worth building. The black hat chart was difficult because we had to decide how to implement each technique, and we kept second-guessing whether a technique was actually effective.</p>
       </article>
       <article class="card" id="appendix-ai">
         <h3>AI usage and reflection</h3>
 
         <h4>Our approach: AI as a research assistant, design critic, and validation tool</h4>
-        <p>We used <strong>Claude Code (Claude Sonnet 5.5)</strong> throughout the project for code generation, exploratory data analysis, design evaluation, and iterative refinement. However, our most meaningful use of AI went beyond generating code. We used it to explore how data can be presented honestly or misleadingly, evaluate our visualizations against the rubric, identify weaknesses in our designs, and investigate alternative approaches.</p>
+        <p>We used <strong>Claude Code (Claude Sonnet 5.5)</strong> throughout the project for code generation, exploratory data analysis, design evaluation, and iterative refinement. We used it to explore how data can be presented honestly or misleadingly, evaluate our visualizations against the rubric, identify weaknesses in our designs, and investigate alternative approaches.</p>
         <p>Our team retained responsibility for choosing the dataset, developing the white hat and black hat narratives, evaluating AI-generated suggestions, determining which features to implement or reject, and finalizing the visualizations and written explanations.</p>
 
-        <h4>1. Novel use: Investigating how data selection can manipulate a narrative</h4>
+        <h4>1. Investigating how data selection can manipulate a narrative</h4>
         <p>One of our most significant uses of AI was exploring how the same greenhouse gas emissions dataset could support different interpretations depending on the selected time period.</p>
         <p>Our exploratory analysis script tested how sensitive the totals were to the choice of time window and surfaced the 2007 peak and the 2020 COVID-era low. Later, when we built the cherry-picking heatmap, Claude evaluated <strong>528 candidate windows</strong> and confirmed that 2007&ndash;2020 is the most favorable interval, with a reported emissions reduction of <strong>13.6%</strong>. More than half of the windows show emissions rising. By comparison, the complete 1990&ndash;2022 period showed a reduction of only <strong>2.4%</strong>.</p>
-        <p>This supports our black hat visualization: it shows how selectively presenting an accurate subset of data can create a misleading impression without falsifying the underlying values.</p>
-        <p>We also used AI to evaluate how changes in framing, titles, annotations, and visual presentation could influence interpretation. This connected computational analysis directly to the design and ethical objectives of the assignment.</p>
+        <p>This gave us an idea for how to tackle the <strong>black hat visualization</strong> by focusing on the 2007-2020 period.</p>
+        <p>We also used AI to evaluate how changes in framing, titles, annotations, and visual presentation could influence interpretation.</p>
 
         <h4>2. AI-assisted design evaluation and iteration</h4>
         <p>We repeatedly asked Claude to evaluate our visualizations against individual rubric criteria rather than simply asking whether the charts looked good.</p>
@@ -167,80 +175,79 @@
         </ul>
         <p>We used these findings to improve the visualization through clearer legends, callouts for the largest increase and decrease, improved ordering, and a named list of excluded countries.</p>
         <p>For the <strong>black hat visualization</strong>, Claude identified a contradiction between our written explanation and the actual page: our write-up claimed that the date range was concealed, even though it appeared in the subtitle. We revised the implementation and explanation to ensure our claims accurately described the finished visualization.</p>
-        <p>AI also helped us evaluate scope. Initially, we had three white hat visualizations and two black hat visualizations. We questioned whether we were prioritizing quantity over quality and asked Claude to evaluate our approach. Its feedback reinforced our decision to focus on fewer, more polished views rather than adding features that did not meaningfully improve the project.</p>
 
-        <h4>3. Critical reflection: Where AI was wrong and how we responded</h4>
+        <h4>3. AI mishaps and how we responded</h4>
         <p>We did not automatically accept Claude&rsquo;s outputs. Several recommendations were inaccurate, unclear, or unsuitable for our design goals.</p>
         <ul>
           <li><strong>Confusing Ukraine-adjusted comparison.</strong> Claude proposed and implemented a feature showing emissions totals without Ukraine, first as a toggle and later as an additional total row with a hover chart. Although analytically interesting, we found both implementations difficult to interpret. We removed the feature instead of keeping it merely because the code had already been written.</li>
           <li><strong>Inconsistent unit conversion.</strong> While auditing our reduced dataset, Claude identified inconsistent unit handling across two scripts. We consolidated the conversion into one script and added assertions to prevent similar discrepancies.</li>
           <li><strong>Interaction and narrative decisions.</strong> Claude initially generated sort controls that were too small. We revised their sizing. It also recommended placing the reveal section immediately beside the black hat chart, but we chose to position it after the written explanations to preserve the intended narrative sequence.</li>
         </ul>
-        <p>These cases reinforced an important lesson: <strong>AI-generated solutions still require verification, usability evaluation, and human judgment.</strong> We treated its recommendations as proposals to test rather than instructions to follow.</p>
 
         <h4>4. Documentation of key iterations</h4>
-        <p>The following table summarizes representative prompts from our development process, the AI&rsquo;s contributions, and our final decisions. Prompts are reproduced from our interactions and shortened where they included lengthy pasted material.</p>
+        <p>The following table summarizes representative prompts from our development process, the AI&rsquo;s contributions, and our final decisions.</p>
         <table class="ai-table">
           <thead><tr><th>Phase</th><th>Sample prompt</th><th>AI contribution</th><th>Our decision</th></tr></thead>
           <tbody>
             <tr><td>Data exploration</td><td><q>acting as an advanced data visualizer &hellip; using the greenhouse gas data, do some EDA using a script to find the best points to approach</q></td><td>Generated an exploratory script examining aggregates, time windows, and ranking sensitivity.</td><td>Used the findings after correcting an initial draft that ran without the actual data file.</td></tr>
             <tr><td>Data validation</td><td><q>Does emissions.csv reflect real data? How is it smaller?</q></td><td>Compared 8,156 processed rows against the 649,251-row original, finding a maximum difference of 0.0005 Mt and inconsistent unit handling.</td><td>Centralized unit conversion and added validation assertions.</td></tr>
-            <tr><td>Design scoping</td><td><q>since i have 3 white hat visualizations and 2 black hat visualization, am I having now just quantity instead of quality</q></td><td>Evaluated whether having five visualizations improved the project or introduced unnecessary complexity. Recommended prioritizing fewer, more polished views.</td><td>Reduced scope to one white hat chart with a coverage grid and one black hat chart.</td></tr>
             <tr><td>White hat evaluation</td><td><q>how is the best way to visualize all the countries and their change in gas emissions from 1990 to 2022</q></td><td>Explored visual approaches for comparing emissions changes across countries while maintaining readability and making important differences visible.</td><td>We decided to use a diverging bar chart, with clear ordering, legend chips, callouts for the largest changes, and a named list of excluded countries.</td></tr>
             <tr><td>Black hat evaluation</td><td><q>does the blackhat fulfill this in writeup and our viz</q> (with the rubric)</td><td>Identified concerns about subtlety, a contradiction in the explanation, and an inaccurate claim.</td><td>Revised the headline, removed the end year from the subtitle, and corrected the write-up.</td></tr>
             <tr><td>Rejected feature</td><td><q>how can we incorporate the ukraine feature in the white hat chart</q></td><td>Generated two alternative implementations for excluding Ukraine.</td><td>Rejected both because they complicated the visualization without sufficiently improving clarity.</td></tr>
           </tbody>
         </table>
 
-        <h4>5. Why our approach is innovative</h4>
-        <p>Our approach was innovative because we used AI not only to produce a visualization, but also to <strong>investigate the relationship between data analysis, visual design, and misleading communication</strong>.</p>
-        <p>The time-window exploration was particularly important. By computationally examining every possible interval, we showed how a technically accurate selection of data can produce a substantially different narrative from the full dataset. This let us document, with evidence, why our black hat window is a cherry-picked one.</p>
-        <p>We also used AI in an iterative process of proposing, evaluating, rejecting, and refining design ideas. Its contributions were not limited to implementation: it helped us identify inconsistencies, compare alternatives, test numerical claims, and critique usability.</p>
-        <p>At the same time, our team made the final decisions. We rejected features that reduced clarity, corrected inaccurate descriptions, and verified calculations before incorporating them.</p>
-
-        <h4>6. What we learned</h4>
-        <p>This project showed us that AI can be valuable as a computational and critical-thinking aid, but its recommendations are not inherently reliable.</p>
-        <p>We learned that effective AI use requires more than writing prompts and accepting generated solutions. It requires asking targeted questions, examining the resulting evidence, testing implementations, recognizing limitations, and making independent decisions.</p>
-        <p>Our most valuable results came from combining <strong>AI-assisted exploration with human evaluation</strong>. This helped us develop more deliberate visualizations while gaining a deeper understanding of how data selection and presentation can shape the conclusions readers draw.</p>
+        
       </article>
       <article class="card" id="appendix-extra">
         <h3>Extra credit features</h3>
-        <p>The assignment requires two visualizations and a write-up for each. These three features go beyond that. Each answers a question a reader of our charts would naturally ask, and each is built from the same data and code as the main charts.</p>
 
         <h4><a href="#ec-switches">1. Per-trick reveal switches with a live readout</a></h4>
         <dl>
           <dt>What it does</dt>
           <dd>Three independent switches (time window, vertical axis, title and color) undo one distortion at a time. A readout shows the percent change on screen, how much of the chart height the drop fills, and the tone of the framing.</dd>
-          <dt>Why it is innovative or advanced</dt>
+          <dt>Why it is innovative</dt>
           <dd>A reveal is usually one before-and-after button. Here the distortions are separate variables, so the reader can run a small controlled experiment, and the readout turns each effect into a number (percent change, share of chart height) instead of only a visual impression.</dd>
           <dt>Why it matters for our visualization</dt>
           <dd>Our black hat chart combines three tricks, and a single before-and-after cannot show which one does the work. The switches separate them: the time window alone moves the headline figure from −13.6% to −2.4%, the axis changes only how large the same drop looks, and the title and color change only the tone. This is the argument of our black hat write-up, made testable.</dd>
           <dt>How it goes beyond the requirements</dt>
-          <dd>The write-up explains the techniques. The switches let the reader check each claim by changing one variable and watching the numbers, including mixed settings.</dd>
+          <dd>The write-up explains the techniques. This goes beyond requirements by allowing the reader to check each claim themselves by changing one variable and watching the numbers.</dd>
         </dl>
 
         <h4><a href="#ec-heatmap">2. Cherry-picking heatmap</a></h4>
         <dl>
           <dt>What it does</dt>
           <dd>A grid of every possible start year and end year (528 windows) is colored by the change in total emissions for our 61 countries, with the black hat chart's window outlined.</dd>
-          <dt>Why it is innovative or advanced</dt>
+          <dt>Why it is innovative</dt>
           <dd>Instead of showing one alternative window, it draws the whole space of possible windows at once, so the reader sees where the chosen window sits among all the headlines the data could support. It needs a new calculation for every start and end year pair, rendered as a diverging color scale centered on zero.</dd>
           <dt>Why it matters for our visualization</dt>
           <dd>A black hat chart that selects a time window only works if that window is unrepresentative. The heatmap tests that directly: 2007–2020 is the most flattering of all 528 windows, and more than half of them (293) show emissions rising. So the selective filtering is shown to be cherry-picking, not just asserted, and it answers the fair question of whether another window would have told the same story.</dd>
           <dt>How it goes beyond the requirements</dt>
-          <dd>It computes a new dataset (the change for every possible window) that none of the main charts need. It sits in the review section, so it does not tip off readers of the black hat chart.</dd>
+          <dd>It goes beyond the requirements by illustrating how the manipulation in the black-hat visualization works, demonstrating how changes in the selected time range can lead to significantly different interpretations of emissions trends.</dd>
         </dl>
 
         <h4><a href="#ec-accessibility">3. Accessibility and keyboard navigation</a></h4>
         <dl>
           <dt>What it does</dt>
           <dd>The main chart works without a mouse. Tab to the chart, then use the arrow keys (plus Home and End) to move between countries. Each row shows a focus ring and a tooltip with its values and has a text label for screen readers. Direction is never shown by color alone: it also comes from the zero line and printed values. The palette is colorblind-safe, and transitions stop when the system requests reduced motion.</dd>
-          <dt>Why it is innovative or advanced</dt>
+          <dt>Why it is innovative</dt>
           <dd>Static SVG charts are usually mouse-only. This one uses a single tab stop with arrow-key movement between rows (a roving focus model), labels every row for screen readers, shows the tooltip on keyboard focus, and respects the reduced-motion setting.</dd>
           <dt>Why it matters for our visualization</dt>
           <dd>The assignment defines a white hat chart as clear and easy to interpret for its intended audience, often the general population. A chart that needs a mouse or full color vision is not clear to part of that audience, and a visualization about honest communication should not exclude readers.</dd>
-          <dt>How it goes beyond the requirements, and its limit</dt>
-          <dd>Accessibility is not part of the rubric. The limit is that the heatmap is not keyboard-navigable, so it has a text summary and a list of its five most flattering windows instead.</dd>
+          <dt>How it goes beyond the requirements</dt>
+          <dd>Knowing the audience also means accounting for how they navigate the chart. This feature goes beyond the requirements by treating accessibility as part of the design. That is a step beyond a visualization that only works by pointing and clicking. </dd>
+        </dl>
+
+        <h4><a href="#ec-split">4. Contribution split by year</a></h4>
+        <dl>
+          <dt>What it does</dt>
+          <dd>Hovering any point on the emissions line opens the total into countries, measured from 2007 to that point's year. It lists the countries that fell and the countries that rose or stayed flat, largest changes first, with each side's total. The countries are the same 61 as the line, so the two sides add up to the change since 2007. The 2007 point is the starting year, so it shows the level and no change.</dd>
+          <dt>Why it is innovative</dt>
+          <dd>The line reads as one decline. Each point shows that decline as a split up to that year: who produced the drop since 2007, and who moved the other way.</dd>
+          <dt>Why it matters for our visualization</dt>
+          <dd>The black hat chart says emissions have fallen since 2007. That figure is a net, and it depends on which year you stop at. Moving along the line shows how the same 2007 start produces a different split at each year.</dd>
+          <dt>How it goes beyond the requirements</dt>
+          <dd>This goes beyond a standard line graph because the line only shows the combined total. A viewer can see that the total fell, but not which countries produced that drop, or that other countries rose over the same years. This addtional information is important for the black hat chart because it shows the contribution of the countries that contributed most to the decline.</dd>
         </dl>
       </article>
     </section>
